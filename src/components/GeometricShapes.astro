@@ -6,22 +6,6 @@
   <!-- 2. Black square, rotated, upper-left -->
   <div class="geo geo-square"></div>
 
-  <!-- 3. Clock ring, lower-left -->
-  <div class="geo geo-ring" id="geo-ring">
-    <div class="clock-face" id="clock-face">
-      <div class="clock-hand clock-hour" id="clock-hour"></div>
-      <div class="clock-hand clock-minute" id="clock-minute"></div>
-      <div class="clock-hand clock-second" id="clock-second"></div>
-      <div class="clock-pin"></div>
-    </div>
-    <div class="clock-digital" id="clock-digital">00:00</div>
-  </div>
-
-  <!-- 4. Gold horizontal bar, near registration mark — draggable -->
-  <div class="geo geo-bar-h" id="geo-bar-h">
-    <div class="bar-pivot" aria-hidden="true"></div>
-  </div>
-
   <!-- 5. Vertical thin line, left -->
   <div class="geo geo-bar-v" data-parallax="0.55"></div>
 
@@ -46,6 +30,25 @@
 
   <!-- 11. Second watermark — parallax layer -->
   <div class="geo geo-watermark-2" data-parallax="0.15">СОВЕТСКИЙ</div>
+</div>
+
+<!-- Interactive layer — visually subtle like background, but above content for mouse events -->
+<div class="layer-interactive" aria-hidden="true">
+  <!-- 3. Clock ring, lower-left -->
+  <div class="geo geo-ring" id="geo-ring">
+    <div class="clock-face" id="clock-face">
+      <div class="clock-hand clock-hour" id="clock-hour"></div>
+      <div class="clock-hand clock-minute" id="clock-minute"></div>
+      <div class="clock-hand clock-second" id="clock-second"></div>
+      <div class="clock-pin"></div>
+    </div>
+    <div class="clock-digital" id="clock-digital">00:00</div>
+  </div>
+
+  <!-- 4. Gold horizontal bar, near registration mark — draggable -->
+  <div class="geo geo-bar-h" id="geo-bar-h">
+    <div class="bar-pivot" aria-hidden="true"></div>
+  </div>
 </div>
 
 <script>
@@ -122,7 +125,6 @@
 
       var pos = dragAngle;
       var vel = 0;
-      // Higher stiffness + moderate damping = snappy settle without jitter
       var STIFFNESS = 0.03;
       var DAMPING = 0.85;
 
@@ -178,6 +180,16 @@
     animation: slow-spin 150s linear infinite;
   }
 
+  /* ---- Interactive Layer (above content for mouse events, visually subtle) ---- */
+  .layer-interactive {
+    position: fixed;
+    inset: 0;
+    z-index: 2;
+    pointer-events: none;
+    overflow: hidden;
+    mix-blend-mode: multiply;
+  }
+
   /* ---- Circle Ring / Clock ---- */
   .geo-ring {
     width: 300px;
@@ -186,7 +198,7 @@
     left: -3%;
     border: 16px solid var(--black);
     border-radius: 50%;
-    opacity: 0.7;
+    opacity: 0.55;
     pointer-events: auto;
     cursor: default;
   }
