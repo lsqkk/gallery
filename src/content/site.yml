@@ -13,7 +13,7 @@ profile:
 
 projects:
   - name: "夸克博客"
-    description: "主要博客 / 文章 / 开源工具更新 / 游戏 / 前端实验\n一个基于 Astro 框架的个人博客。静态页面由 GitHub Pages 托管，动态能力通过独立的 Vercel Serverless API 提供，前端交互以原生 JavaScript、Canvas、WebRTC 和 Firebase RTDB 为核心。"
+    description: "主要博客 / 文章 / 开源工具更新 / 游戏 / 前端实验<br>一个基于 Astro 框架的个人博客。静态页面由 GitHub Pages 托管，动态能力通过独立的 Vercel Serverless API 提供，前端交互以原生 JavaScript、Canvas、WebRTC 和 Firebase RTDB 为核心。"
     url: "https://lsqkk.github.io"
     featured: true
     tags: ["博客", "开源"]

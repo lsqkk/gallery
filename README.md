@@ -2,7 +2,7 @@
 
 A personal gallery/navigation homepage built with [Astro](https://astro.build). Inspired by Russian Suprematism and Soviet Constructivism — geometric abstraction, bold red-black-gold palette, Cyrillic typography, and print-era texture.
 
-> **Live:** [lsqkk.github.io](https://lsqkk.github.io)
+> **Live:** [130923.xyz](https://130923.xyz)
 
 ## Features
 
