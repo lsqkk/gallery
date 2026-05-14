@@ -6,7 +6,7 @@ export interface Props {
   description?: string;
 }
 
-const { title = '蓝色奇夸克 | 前端项目导航', description = '无穷的远方 无数的人们，都和我有关' } = Astro.props;
+const { title = '蓝色奇夸克的 Gallery', description = '无穷的远方，无数的人们，都和我有关' } = Astro.props;
 ---
 
 <!DOCTYPE html>
@@ -52,7 +52,7 @@ const { title = '蓝色奇夸克 | 前端项目导航', description = '无穷的
           const center = rect.top + rect.height / 2;
           const dist = (center / vh - 0.5) * 2;
           const clamped = Math.max(-0.8, Math.min(0.8, dist));
-          const offset = clamped * vh * (1 - speed) * 0.12;
+          const offset = clamped * vh * (1 - speed) * 0.2;
           el.style.transform = `translateY(${-offset}px)`;
         }
       }

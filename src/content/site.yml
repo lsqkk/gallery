@@ -1,6 +1,6 @@
 site:
-  title: "蓝色奇夸克 | 前端项目导航"
-  description: "无穷的远方 无数的人们，都和我有关"
+  title: "蓝色奇夸克的 Gallery"
+  description: "无穷的远方，无数的人们，都和我有关"
   lang: "zh-CN"
 
 profile:
@@ -9,7 +9,7 @@ profile:
   classYear: "23级少年班 (YGC)"
   department: "25级自动化 (AUTO)"
   role: "前端开发者"
-  signature: "无穷的远方 无数的人们，都和我有关"
+  signature: "无穷的远方，无数的人们，都和我有关"
 
 projects:
   - name: "夸克博客"

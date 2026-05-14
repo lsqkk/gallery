@@ -1,7 +1,7 @@
 <!-- Fixed Suprematist geometric composition — visible behind all content -->
 <div class="layer-fixed" aria-hidden="true">
   <!-- 1. Large red triangle, right side, pointing down-left -->
-  <div class="geo geo-triangle"></div>
+  <div class="geo geo-triangle" data-parallax="0.45"></div>
 
   <!-- 2. Black square, rotated, upper-left -->
   <div class="geo geo-square"></div>
@@ -10,29 +10,29 @@
   <div class="geo geo-ring"></div>
 
   <!-- 4. Gold horizontal bar, top-right -->
-  <div class="geo geo-bar-h"></div>
+  <div class="geo geo-bar-h" data-parallax="0.3"></div>
 
   <!-- 5. Vertical thin line, left -->
-  <div class="geo geo-bar-v"></div>
+  <div class="geo geo-bar-v" data-parallax="0.55"></div>
 
   <!-- 6. Small red square accent, lower-right -->
-  <div class="geo geo-accent-1"></div>
+  <div class="geo geo-accent-1" data-parallax="0.2"></div>
 
   <!-- 7. Black circle accent, center-left -->
-  <div class="geo geo-accent-2"></div>
+  <div class="geo geo-accent-2" data-parallax="0.6"></div>
 
   <!-- 8. Diagonal red line, center -->
   <div class="geo geo-diagonal"></div>
 
   <!-- 9. Registration mark (印刷套准标记) upper-right -->
-  <div class="geo geo-regmark">
+  <div class="geo geo-regmark" data-parallax="0.35">
     <div class="regmark-circle"></div>
     <div class="regmark-cross-h"></div>
     <div class="regmark-cross-v"></div>
   </div>
 
   <!-- 10. Cyrillic watermark — very faint, fills background -->
-  <div class="geo geo-watermark">ГАЛЕРЕЯ</div>
+  <div class="geo geo-watermark" data-parallax="0.65">ГАЛЕРЕЯ</div>
 
   <!-- 11. Second watermark — parallax layer -->
   <div class="geo geo-watermark-2" data-parallax="0.15">СОВЕТСКИЙ</div>
@@ -57,7 +57,8 @@
     height: 170px;
     top: 14%;
     left: 2%;
-    background: var(--black);
+    background: var(--gold);
+    opacity: 0.3;
     transform: rotate(28deg);
     animation: slow-spin 150s linear infinite;
   }
