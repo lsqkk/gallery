@@ -6,6 +6,22 @@
   <!-- 2. Black square, rotated, upper-left -->
   <div class="geo geo-square"></div>
 
+  <!-- 3. Clock ring — visible only behind content -->
+  <div class="geo geo-ring" id="geo-ring">
+    <div class="clock-face" id="clock-face">
+      <div class="clock-hand clock-hour" id="clock-hour"></div>
+      <div class="clock-hand clock-minute" id="clock-minute"></div>
+      <div class="clock-hand clock-second" id="clock-second"></div>
+      <div class="clock-pin"></div>
+    </div>
+    <div class="clock-digital" id="clock-digital">00:00</div>
+  </div>
+
+  <!-- 4. Gold horizontal bar — visible only behind content -->
+  <div class="geo geo-bar-h" id="geo-bar-h">
+    <div class="bar-pivot" aria-hidden="true"></div>
+  </div>
+
   <!-- 5. Vertical thin line, left -->
   <div class="geo geo-bar-v" data-parallax="0.55"></div>
 
@@ -32,23 +48,13 @@
   <div class="geo geo-watermark-2" data-parallax="0.15">СОВЕТСКИЙ</div>
 </div>
 
-<!-- Interactive layer — visually subtle like background, but above content for mouse events -->
+<!-- Invisible hit targets — above content, capture mouse events for background elements -->
 <div class="layer-interactive" aria-hidden="true">
-  <!-- 3. Clock ring, lower-left -->
-  <div class="geo geo-ring" id="geo-ring">
-    <div class="clock-face" id="clock-face">
-      <div class="clock-hand clock-hour" id="clock-hour"></div>
-      <div class="clock-hand clock-minute" id="clock-minute"></div>
-      <div class="clock-hand clock-second" id="clock-second"></div>
-      <div class="clock-pin"></div>
-    </div>
-    <div class="clock-digital" id="clock-digital">00:00</div>
-  </div>
+  <!-- 3a. Clock hit target — invisible, same position as geo-ring -->
+  <div class="ring-ht" id="ring-ht"></div>
 
-  <!-- 4. Gold horizontal bar, near registration mark — draggable -->
-  <div class="geo geo-bar-h" id="geo-bar-h">
-    <div class="bar-pivot" aria-hidden="true"></div>
-  </div>
+  <!-- 4a. Bar hit target — invisible, same position as geo-bar-h -->
+  <div class="bar-ht" id="bar-ht"></div>
 </div>
 
 <script>
@@ -60,6 +66,8 @@
   var minHand = document.getElementById('clock-minute');
   var secHand = document.getElementById('clock-second');
   var clockDigital = document.getElementById('clock-digital');
+  var ringEl = document.getElementById('geo-ring');
+  var ringHT = document.getElementById('ring-ht');
 
   if (hourHand) {
     function tick() {
@@ -82,27 +90,43 @@
     setInterval(tick, 1000);
   }
 
+  // Clock hover: invisible hit target controls visible ring
+  if (ringHT && ringEl) {
+    ringHT.addEventListener('mouseenter', function() { ringEl.classList.add('ring-active'); });
+    ringHT.addEventListener('mouseleave', function() { ringEl.classList.remove('ring-active'); });
+    // Touch support
+    ringHT.addEventListener('touchstart', function() { ringEl.classList.add('ring-active'); }, { passive: true });
+    ringHT.addEventListener('touchend', function() { ringEl.classList.remove('ring-active'); });
+  }
+
   /* ========== DRAGGABLE GOLD BAR ========== */
-  var bar = document.getElementById('geo-bar-h');
-  if (bar) {
+  var barVis = document.getElementById('geo-bar-h');
+  var barHT = document.getElementById('bar-ht');
+
+  if (barVis && barHT) {
     var isDragging = false;
     var dragAngle = 0;
     var pivotX = 0, pivotY = 0;
     var startAngleOffset = 0;
+
+    // Bar hover: invisible hit target controls visible bar-pivot
+    barHT.addEventListener('mouseenter', function() { barVis.classList.add('bar-active'); });
+    barHT.addEventListener('mouseleave', function() { barVis.classList.remove('bar-active'); });
 
     function onStart(e) {
       var cx = e.clientX || (e.touches && e.touches[0].clientX);
       var cy = e.clientY || (e.touches && e.touches[0].clientY);
       if (cx == null) return;
 
-      // Capture pivot ONCE at drag start — prevents flickering from rect changes during rotation
-      var rect = bar.getBoundingClientRect();
+      // Pivot from the VISIBLE bar (behind content, but rect is still accurate)
+      var rect = barVis.getBoundingClientRect();
       pivotX = rect.left + rect.width * 0.9;
       pivotY = rect.top + rect.height / 2;
 
       startAngleOffset = Math.atan2(cy - pivotY, cx - pivotX) * (180 / Math.PI) - dragAngle;
       isDragging = true;
-      bar.style.cursor = 'grabbing';
+      barVis.style.cursor = 'grabbing';
+      barHT.style.cursor = 'grabbing';
       if (e.cancelable) e.preventDefault();
     }
 
@@ -113,15 +137,15 @@
       if (cx == null) return;
 
       var raw = Math.atan2(cy - pivotY, cx - pivotX) * (180 / Math.PI) - startAngleOffset;
-      // Clamp to prevent extreme angles that cause visual glitches
       dragAngle = Math.max(-100, Math.min(100, raw));
-      bar.style.transform = 'rotate(' + dragAngle + 'deg)';
+      barVis.style.transform = 'rotate(' + dragAngle + 'deg)';
     }
 
     function onEnd() {
       if (!isDragging) return;
       isDragging = false;
-      bar.style.cursor = 'grab';
+      barVis.style.cursor = '';
+      barHT.style.cursor = 'grab';
 
       var pos = dragAngle;
       var vel = 0;
@@ -133,22 +157,22 @@
         vel = (vel + force) * DAMPING;
         pos += vel;
 
-        bar.style.transform = 'rotate(' + pos + 'deg)';
+        barVis.style.transform = 'rotate(' + pos + 'deg)';
 
         if (Math.abs(pos) > 0.4 || Math.abs(vel) > 0.1) {
           requestAnimationFrame(spring);
         } else {
-          bar.style.transform = '';
+          barVis.style.transform = '';
           dragAngle = 0;
         }
       }
       requestAnimationFrame(spring);
     }
 
-    bar.addEventListener('mousedown', onStart);
+    barHT.addEventListener('mousedown', onStart);
     document.addEventListener('mousemove', onMove);
     document.addEventListener('mouseup', onEnd);
-    bar.addEventListener('touchstart', onStart, { passive: true });
+    barHT.addEventListener('touchstart', onStart, { passive: true });
     document.addEventListener('touchmove', onMove, { passive: true });
     document.addEventListener('touchend', onEnd);
   }
@@ -180,17 +204,16 @@
     animation: slow-spin 150s linear infinite;
   }
 
-  /* ---- Interactive Layer (above content for mouse events, visually subtle) ---- */
+  /* ---- Interactive Layer (transparent, only contains hit targets) ---- */
   .layer-interactive {
     position: fixed;
     inset: 0;
     z-index: 2;
     pointer-events: none;
     overflow: hidden;
-    mix-blend-mode: multiply;
   }
 
-  /* ---- Circle Ring / Clock ---- */
+  /* ---- Clock Ring (visible, behind content) ---- */
   .geo-ring {
     width: 300px;
     height: 300px;
@@ -198,9 +221,7 @@
     left: -3%;
     border: 16px solid var(--black);
     border-radius: 50%;
-    opacity: 0.55;
-    pointer-events: auto;
-    cursor: default;
+    opacity: 0.7;
   }
 
   .clock-face {
@@ -210,7 +231,7 @@
     transition: opacity 0.35s ease;
   }
 
-  .geo-ring:hover .clock-face {
+  .geo-ring.ring-active .clock-face {
     opacity: 0;
   }
 
@@ -272,25 +293,31 @@
     border-radius: 2px;
   }
 
-  .geo-ring:hover .clock-digital {
+  .geo-ring.ring-active .clock-digital {
     opacity: 1;
   }
 
-  /* ---- Gold Horizontal Bar (draggable, near registration mark) ---- */
+  /* ---- Clock Hit Target (invisible) ---- */
+  .ring-ht {
+    position: absolute;
+    width: 300px;
+    height: 300px;
+    bottom: -4%;
+    left: -3%;
+    border-radius: 50%;
+    pointer-events: auto;
+    cursor: default;
+  }
+
+  /* ---- Gold Horizontal Bar (visible, behind content) ---- */
   .geo-bar-h {
     width: 22%;
     height: 16px;
     top: 12%;
     right: 16%;
     background: var(--gold);
-    pointer-events: auto;
-    cursor: grab;
     transform-origin: 90% center;
     position: absolute;
-  }
-
-  .geo-bar-h:active {
-    cursor: grabbing;
   }
 
   .bar-pivot {
@@ -307,8 +334,23 @@
     transition: opacity 0.2s ease;
   }
 
-  .geo-bar-h:hover .bar-pivot {
+  .geo-bar-h.bar-active .bar-pivot {
     opacity: 0.6;
+  }
+
+  /* ---- Bar Hit Target (invisible, slightly taller for easier grabbing) ---- */
+  .bar-ht {
+    position: absolute;
+    width: 22%;
+    height: 24px;
+    top: 12%;
+    right: 16%;
+    pointer-events: auto;
+    cursor: grab;
+  }
+
+  .bar-ht:active {
+    cursor: grabbing;
   }
 
   /* ---- Vertical Thin Line ---- */
@@ -416,9 +458,11 @@
     .geo-triangle { width: 70vw; height: 50vh; top: 30vh; }
     .geo-square { width: 100px; height: 100px; top: 10%; }
     .geo-ring { width: 180px; height: 180px; border-width: 10px; }
+    .ring-ht { width: 180px; height: 180px; }
     .clock-digital { font-size: 1.1rem; padding: 2px 6px; }
     .clock-face { inset: 12px; }
     .geo-bar-h { height: 12px; width: 30%; top: 12%; right: 18%; }
+    .bar-ht { height: 20px; width: 30%; top: 12%; right: 18%; }
     .geo-bar-v { left: 92%; }
     .geo-regmark { right: 6%; }
   }
