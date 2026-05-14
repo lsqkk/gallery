@@ -40,6 +40,12 @@ const { profile } = Astro.props;
         <div class="hero__line"></div>
         <p class="hero__signature">「{profile.signature}」</p>
       </div>
+
+      <!-- Blog Button -->
+      <a href="https://lsqkk.github.io" class="hero__blog-btn" target="_blank" rel="noopener noreferrer" data-reveal data-reveal-delay="0.45">
+        <span class="hero__blog-arrow">→</span>
+        <span>前往博客</span>
+      </a>
     </div>
 
     <!-- Decorative elements -->
@@ -222,6 +228,40 @@ const { profile } = Astro.props;
     font-size: 0.6rem;
     letter-spacing: 0.25em;
     text-transform: uppercase;
+  }
+
+  /* ---- Blog Button ---- */
+  .hero__blog-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    font-family: var(--font-display);
+    font-size: clamp(0.8rem, 1.1vw, 0.95rem);
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--white-off);
+    background: var(--red);
+    padding: 10px 24px;
+    border: none;
+    cursor: pointer;
+    text-decoration: none;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    margin-top: 2rem;
+    position: relative;
+  }
+
+  .hero__blog-btn:hover {
+    transform: translate(-3px, -3px);
+    box-shadow: 5px 5px 0 var(--black);
+  }
+
+  .hero__blog-arrow {
+    display: inline-block;
+    transition: transform 0.2s ease;
+  }
+
+  .hero__blog-btn:hover .hero__blog-arrow {
+    transform: translateX(4px);
   }
 
   @keyframes scroll-bounce {

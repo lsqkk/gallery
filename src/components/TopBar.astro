@@ -1,0 +1,125 @@
+---
+---
+
+<header class="topbar">
+  <div class="topbar__container">
+    <a href="/" class="topbar__brand" aria-label="Home">
+      <span class="topbar__mark">◇</span>
+      <span class="topbar__title">КВАНТ</span>
+    </a>
+    <nav class="topbar__nav">
+      <a href="https://lsqkk.github.io" class="topbar__link" target="_blank" rel="noopener noreferrer">БЛОГ</a>
+      <a href="https://github.com/lsqkk" class="topbar__link" target="_blank" rel="noopener noreferrer">GITHUB</a>
+    </nav>
+  </div>
+  <div class="topbar__border" aria-hidden="true"></div>
+  <div class="crop-mark crop-mark--tl" aria-hidden="true"></div>
+  <div class="crop-mark crop-mark--tr" aria-hidden="true"></div>
+</header>
+
+<style is:global>
+  body {
+    padding-top: 48px;
+  }
+</style>
+
+<style>
+  .topbar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 48px;
+    z-index: 9999;
+    background: var(--white-off);
+    padding: 0 6vw;
+    display: flex;
+    align-items: center;
+  }
+
+  .topbar__container {
+    width: 100%;
+    max-width: 1280px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 100%;
+    position: relative;
+  }
+
+  .topbar__brand {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    text-decoration: none;
+    color: inherit;
+  }
+
+  .topbar__mark {
+    font-size: 0.9rem;
+    color: var(--red);
+    opacity: 0.7;
+  }
+
+  .topbar__title {
+    font-family: var(--font-display);
+    font-size: 1.1rem;
+    letter-spacing: 0.25em;
+    color: var(--black);
+  }
+
+  .topbar__nav {
+    display: flex;
+    gap: 28px;
+  }
+
+  .topbar__link {
+    font-family: var(--font-display);
+    font-size: 0.8rem;
+    letter-spacing: 0.18em;
+    color: var(--black);
+    opacity: 0.45;
+    text-decoration: none;
+    transition: opacity 0.2s ease;
+    position: relative;
+  }
+
+  .topbar__link::after {
+    content: '';
+    position: absolute;
+    bottom: -4px;
+    left: 0;
+    width: 100%;
+    height: 2px;
+    background: var(--red);
+    transform: scaleX(0);
+    transform-origin: right center;
+    transition: transform 0.25s ease;
+  }
+
+  .topbar__link:hover {
+    opacity: 1;
+  }
+
+  .topbar__link:hover::after {
+    transform: scaleX(1);
+    transform-origin: left center;
+  }
+
+  .topbar__border {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: var(--border-thicker);
+    background: var(--red);
+  }
+
+  @media (max-width: 640px) {
+    .topbar { padding: 0 5vw; }
+    .topbar__title { font-size: 0.95rem; }
+    .topbar__link { font-size: 0.7rem; }
+    .topbar__nav { gap: 18px; }
+  }
+</style>

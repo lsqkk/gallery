@@ -9,7 +9,9 @@
       "Bash(npx serve *)",
       "Bash(curl -s http://localhost:3333/assets/index.BZzWZUne.css)",
       "Bash(curl -s http://localhost:3333/)",
-      "Bash(pkill -f \"serve.*3333\")"
+      "Bash(pkill -f \"serve.*3333\")",
+      "Bash(python *)",
+      "Bash(python3 *)"
     ]
   }
 }
