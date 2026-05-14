@@ -1,0 +1,93 @@
+---
+import '../styles/global.css';
+
+export interface Props {
+  title?: string;
+  description?: string;
+}
+
+const { title = '蓝色奇夸克 | 前端项目导航', description = '无穷的远方 无数的人们，都和我有关' } = Astro.props;
+---
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{title}</title>
+  <meta name="description" content={description} />
+  <link rel="icon" type="image/svg+xml" href={`${import.meta.env.BASE_URL}/favicon.svg`} />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600;700;800&family=Staatliches&display=swap" rel="stylesheet" />
+</head>
+<body>
+  <div class="texture-overlay" aria-hidden="true"></div>
+  <slot />
+
+  <script>
+    (() => {
+      'use strict';
+
+      // Helper
+      const $ = (s) => [...document.querySelectorAll(s)];
+
+      // --- Immediately reveal above-fold elements ---
+      $('[data-reveal]').forEach((el) => {
+        if (el.getBoundingClientRect().top < window.innerHeight) {
+          const d = el.getAttribute('data-reveal-delay');
+          if (d) el.style.transitionDelay = `${d}s`;
+          el.classList.add('revealed');
+        }
+      });
+
+      // --- Parallax System ---
+      const parallaxEls = $('[data-parallax]');
+
+      function updateParallax() {
+        const vh = window.innerHeight;
+        for (const el of parallaxEls) {
+          const speed = parseFloat(el.getAttribute('data-parallax')) || 0;
+          const rect = el.getBoundingClientRect();
+          const center = rect.top + rect.height / 2;
+          const dist = (center / vh - 0.5) * 2;
+          const clamped = Math.max(-0.8, Math.min(0.8, dist));
+          const offset = clamped * vh * (1 - speed) * 0.12;
+          el.style.transform = `translateY(${-offset}px)`;
+        }
+      }
+
+      let ticking = false;
+      window.addEventListener('scroll', () => {
+        if (!ticking) {
+          requestAnimationFrame(() => {
+            updateParallax();
+            ticking = false;
+          });
+          ticking = true;
+        }
+      }, { passive: true });
+
+      // --- Reveal Observer for below-fold elements ---
+      const revealEls = $('[data-reveal]:not(.revealed)');
+      if (revealEls.length) {
+        const observer = new IntersectionObserver((entries) => {
+          for (const entry of entries) {
+            if (entry.isIntersecting) {
+              const el = entry.target;
+              const delay = el.getAttribute('data-reveal-delay');
+              if (delay) el.style.transitionDelay = `${delay}s`;
+              el.classList.add('revealed');
+              observer.unobserve(el);
+            }
+          }
+        }, { threshold: 0.08, rootMargin: '0px 0px -40px 0px' });
+        revealEls.forEach((el) => observer.observe(el));
+      }
+
+      // Initialise
+      updateParallax();
+    })();
+  </script>
+</body>
+</html>

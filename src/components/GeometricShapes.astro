@@ -1,0 +1,211 @@
+<!-- Fixed Suprematist geometric composition — visible behind all content -->
+<div class="layer-fixed" aria-hidden="true">
+  <!-- 1. Large red triangle, right side, pointing down-left -->
+  <div class="geo geo-triangle"></div>
+
+  <!-- 2. Black square, rotated, upper-left -->
+  <div class="geo geo-square"></div>
+
+  <!-- 3. Thick circle ring, lower-left -->
+  <div class="geo geo-ring"></div>
+
+  <!-- 4. Gold horizontal bar, top-right -->
+  <div class="geo geo-bar-h"></div>
+
+  <!-- 5. Vertical thin line, left -->
+  <div class="geo geo-bar-v"></div>
+
+  <!-- 6. Small red square accent, lower-right -->
+  <div class="geo geo-accent-1"></div>
+
+  <!-- 7. Black circle accent, center-left -->
+  <div class="geo geo-accent-2"></div>
+
+  <!-- 8. Diagonal red line, center -->
+  <div class="geo geo-diagonal"></div>
+
+  <!-- 9. Registration mark (印刷套准标记) upper-right -->
+  <div class="geo geo-regmark">
+    <div class="regmark-circle"></div>
+    <div class="regmark-cross-h"></div>
+    <div class="regmark-cross-v"></div>
+  </div>
+
+  <!-- 10. Cyrillic watermark — very faint, fills background -->
+  <div class="geo geo-watermark">ГАЛЕРЕЯ</div>
+
+  <!-- 11. Second watermark — parallax layer -->
+  <div class="geo geo-watermark-2" data-parallax="0.15">СОВЕТСКИЙ</div>
+</div>
+
+<style>
+  /* ---- Triangle (right side) ---- */
+  .geo-triangle {
+    width: 50vw;
+    height: 75vh;
+    top: 12vh;
+    right: 0;
+    background: var(--red);
+    clip-path: polygon(100% 0, 100% 100%, 25% 100%);
+    opacity: 0.85;
+    animation: breathe 10s ease-in-out infinite;
+  }
+
+  /* ---- Black Square (rotated) ---- */
+  .geo-square {
+    width: 170px;
+    height: 170px;
+    top: 14%;
+    left: 2%;
+    background: var(--black);
+    transform: rotate(28deg);
+    animation: slow-spin 150s linear infinite;
+  }
+
+  /* ---- Circle Ring ---- */
+  .geo-ring {
+    width: 300px;
+    height: 300px;
+    bottom: -4%;
+    left: -3%;
+    border: 16px solid var(--black);
+    border-radius: 50%;
+    opacity: 0.7;
+    animation: ring-pulse 20s ease-in-out infinite;
+  }
+
+  /* ---- Gold Horizontal Bar ---- */
+  .geo-bar-h {
+    width: 38%;
+    height: 18px;
+    top: 5%;
+    right: 4%;
+    background: var(--gold);
+  }
+
+  /* ---- Vertical Thin Line ---- */
+  .geo-bar-v {
+    width: 4px;
+    height: 50%;
+    left: 86%;
+    top: 10%;
+    background: var(--gold-dark);
+    opacity: 0.4;
+  }
+
+  /* ---- Small Red Square ---- */
+  .geo-accent-1 {
+    width: 32px;
+    height: 32px;
+    bottom: 22%;
+    right: 14%;
+    background: var(--red);
+  }
+
+  /* ---- Black Circle ---- */
+  .geo-accent-2 {
+    width: 52px;
+    height: 52px;
+    top: 56%;
+    left: 28%;
+    background: var(--black);
+    border-radius: 50%;
+    opacity: 0.6;
+  }
+
+  /* ---- Diagonal Red Line ---- */
+  .geo-diagonal {
+    width: 4px;
+    height: 28%;
+    top: 50%;
+    left: 68%;
+    background: var(--red);
+    transform: rotate(-42deg);
+    transform-origin: top center;
+  }
+
+  /* ---- Registration Mark ---- */
+  .geo-regmark {
+    width: 56px;
+    height: 56px;
+    top: 10%;
+    right: 12%;
+  }
+  .regmark-circle {
+    position: absolute;
+    inset: 4px;
+    border: 2px solid var(--black);
+    border-radius: 50%;
+  }
+  .regmark-cross-h, .regmark-cross-v {
+    position: absolute;
+    background: var(--black);
+  }
+  .regmark-cross-h {
+    width: 100%;
+    height: 1px;
+    top: 50%;
+    transform: translateY(-50%);
+  }
+  .regmark-cross-v {
+    height: 100%;
+    width: 1px;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+
+  /* ---- Cyrillic Watermark (fixed) ---- */
+  .geo-watermark {
+    font-family: var(--font-display);
+    font-size: clamp(12rem, 32vw, 26rem);
+    color: rgba(17, 17, 17, 0.035);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    white-space: nowrap;
+    user-select: none;
+    line-height: 1;
+  }
+
+  /* ---- Cyrillic Watermark 2 (parallax) ---- */
+  .geo-watermark-2 {
+    font-family: var(--font-display);
+    font-size: clamp(6rem, 16vw, 12rem);
+    color: rgba(196, 164, 74, 0.04);
+    text-transform: uppercase;
+    letter-spacing: 0.3em;
+    bottom: 15%;
+    right: -5%;
+    white-space: nowrap;
+    user-select: none;
+    line-height: 1;
+  }
+
+  /* ---- Responsive adjustments ---- */
+  @media (max-width: 768px) {
+    .geo-triangle { width: 70vw; height: 50vh; top: 30vh; }
+    .geo-square { width: 100px; height: 100px; top: 10%; }
+    .geo-ring { width: 180px; height: 180px; border-width: 10px; }
+    .geo-bar-h { height: 12px; }
+    .geo-bar-v { left: 92%; }
+    .geo-regmark { right: 6%; }
+  }
+
+  /* ---- Subtle Animations ---- */
+  @keyframes slow-spin {
+    from { transform: rotate(28deg); }
+    to   { transform: rotate(388deg); }
+  }
+
+  @keyframes breathe {
+    0%, 100% { opacity: 0.85; }
+    50%      { opacity: 0.65; }
+  }
+
+  @keyframes ring-pulse {
+    0%, 100% { transform: scale(1);   opacity: 0.7; }
+    50%      { transform: scale(1.04); opacity: 0.5; }
+  }
+</style>

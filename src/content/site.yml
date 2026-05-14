@@ -1,0 +1,65 @@
+site:
+  title: "蓝色奇夸克 | 前端项目导航"
+  description: "无穷的远方 无数的人们，都和我有关"
+  lang: "zh-CN"
+
+profile:
+  name: "蓝色奇夸克"
+  institution: "XJTU"
+  classYear: "23级少年班 (YGC)"
+  department: "25级自动化 (AUTO)"
+  role: "前端开发者"
+  signature: "无穷的远方 无数的人们，都和我有关"
+
+projects:
+  - name: "夸克博客"
+    description: "主要博客 / 文章 / 开源工具更新 / 游戏 / 前端实验\n一个基于 Astro 框架的个人博客。静态页面由 GitHub Pages 托管，动态能力通过独立的 Vercel Serverless API 提供，前端交互以原生 JavaScript、Canvas、WebRTC 和 Firebase RTDB 为核心。"
+    url: "https://lsqkk.github.io"
+    featured: true
+    tags: ["博客", "开源"]
+
+  - name: "学术主页"
+    description: "我的个人学术主页"
+    url: "https://aca.130923.xyz"
+    featured: false
+    tags: ["学术"]
+
+  - name: "GitHub 主页"
+    description: "我的开源项目集合"
+    url: "https://github.com/lsqkk"
+    featured: false
+    tags: ["开源", "代码"]
+
+  - name: "Quark API"
+    description: "Quark API 接口文档"
+    url: "https://doc.130923.xyz/QuarkAPI"
+    featured: false
+    tags: ["API", "文档"]
+
+  - name: "自动化 2506 之家"
+    description: "班级互助网站"
+    url: "https://auto2506.github.io"
+    featured: false
+    tags: ["班级", "互助"]
+
+  - name: "夸克的小窝"
+    description: "香橙派服务器 · 测试页面"
+    url: "https://pi.130923.xyz"
+    featured: false
+    tags: ["服务器", "测试"]
+
+  - name: "跑团助手 TTRPG"
+    description: "AI 跑团助手 · 与 @txy571 共同开发"
+    url: "https://ttrpg.183107.xyz"
+    featured: false
+    tags: ["AI", "跑团"]
+
+  - name: "指南车"
+    description: "一个指南车原理前端动画，系《自概》作业。"
+    url: "https://lsqkk.github.io/guide-vehicle"
+    featured: false
+    tags: ["动画", "前端"]
+
+footer:
+  text: "© 2026 · 蓝色奇夸克 · XJTU"
+  russian: "БЕСКОНЕЧНЫЕ ДАЛИ"

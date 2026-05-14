@@ -1,0 +1,24 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import GeometricShapes from '../components/GeometricShapes.astro';
+import Hero from '../components/Hero.astro';
+import Projects from '../components/Projects.astro';
+import Profile from '../components/Profile.astro';
+import Footer from '../components/Footer.astro';
+
+import yaml from 'js-yaml';
+import fs from 'node:fs';
+
+const content = yaml.load(fs.readFileSync('./src/content/site.yml', 'utf-8'));
+const { site, profile, projects, footer } = content;
+---
+
+<BaseLayout title={site.title} description={site.description}>
+  <GeometricShapes />
+  <main>
+    <Hero profile={profile} />
+    <Projects projects={projects} />
+    <Profile profile={profile} />
+  </main>
+  <Footer footer={footer} />
+</BaseLayout>

@@ -1,0 +1,181 @@
+---
+interface Profile {
+  name: string;
+  institution: string;
+  classYear: string;
+  department: string;
+  role: string;
+  signature: string;
+}
+
+interface Props {
+  profile: Profile;
+}
+
+const { profile } = Astro.props;
+---
+
+<section class="profile section">
+  <div class="container">
+    <h2 class="section-title" data-reveal>ЛИЧНОСТЬ</h2>
+    <p class="profile__sub" data-reveal>个人信息 · Profile</p>
+
+    <div class="profile__content">
+      <!-- Left: Info blocks -->
+      <div class="profile__info" data-reveal>
+        <div class="profile__block">
+          <span class="profile__label">Имя</span>
+          <span class="profile__value">{profile.name}</span>
+        </div>
+        <div class="profile__block">
+          <span class="profile__label">Институт</span>
+          <span class="profile__value">{profile.institution} · {profile.classYear}</span>
+        </div>
+        <div class="profile__block">
+          <span class="profile__label">Факультет</span>
+          <span class="profile__value">{profile.department}</span>
+        </div>
+        <div class="profile__block">
+          <span class="profile__label">Роль</span>
+          <span class="profile__value">{profile.role}</span>
+        </div>
+      </div>
+
+      <!-- Right: Signature + geometric frame -->
+      <div class="profile__frame" data-reveal>
+        <div class="profile__frame-inner">
+          <div class="profile__quote-icon" aria-hidden="true">«</div>
+          <p class="profile__signature">{profile.signature}</p>
+          <div class="profile__line"></div>
+        </div>
+        <!-- Frame crop marks -->
+        <div class="crop-mark crop-mark--tl"></div>
+        <div class="crop-mark crop-mark--tr"></div>
+        <div class="crop-mark crop-mark--bl"></div>
+        <div class="crop-mark crop-mark--br"></div>
+      </div>
+    </div>
+
+    <!-- Decorative bottom elements -->
+    <div class="profile__deco" aria-hidden="true">
+      <div class="profile__deco-bar"></div>
+      <div class="profile__deco-bar profile__deco-bar--short"></div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .profile__sub {
+    font-family: var(--font-body);
+    font-size: 0.8rem;
+    font-weight: 500;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--gold-dark);
+    margin-bottom: 3rem;
+    margin-top: -1.8rem;
+  }
+
+  .profile__content {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 60px;
+    align-items: start;
+  }
+
+  /* --- Info Block List --- */
+  .profile__info {
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+  }
+
+  .profile__block {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    border-left: 4px solid var(--black);
+    padding-left: 16px;
+  }
+
+  .profile__label {
+    font-family: var(--font-display);
+    font-size: 0.7rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--red);
+    opacity: 0.8;
+  }
+
+  .profile__value {
+    font-size: clamp(1rem, 1.3vw, 1.15rem);
+    font-weight: 500;
+    color: var(--black);
+  }
+
+  /* --- Frame (right side) --- */
+  .profile__frame {
+    position: relative;
+    border: var(--border-thicker) solid var(--black);
+    padding: 36px 32px;
+    background: var(--white-off);
+    min-height: 200px;
+    display: flex;
+    align-items: center;
+  }
+
+  .profile__frame-inner {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+  }
+
+  .profile__quote-icon {
+    font-size: 4rem;
+    line-height: 0.6;
+    color: var(--red);
+    opacity: 0.15;
+    margin-bottom: 0.5rem;
+  }
+
+  .profile__signature {
+    font-size: clamp(1rem, 1.5vw, 1.25rem);
+    font-weight: 500;
+    font-style: italic;
+    color: var(--black);
+    line-height: 1.6;
+    letter-spacing: 0.03em;
+  }
+
+  .profile__line {
+    width: 60px;
+    height: 3px;
+    background: var(--red);
+    margin-top: 1.2rem;
+  }
+
+  /* --- Decorative bars at bottom --- */
+  .profile__deco {
+    display: flex;
+    gap: 12px;
+    margin-top: 60px;
+    justify-content: flex-end;
+  }
+
+  .profile__deco-bar {
+    height: 6px;
+    width: 120px;
+    background: var(--gold);
+    opacity: 0.3;
+  }
+
+  .profile__deco-bar--short {
+    width: 60px;
+    background: var(--red);
+    opacity: 0.2;
+  }
+
+  @media (max-width: 768px) {
+    .profile__content { grid-template-columns: 1fr; gap: 40px; }
+  }
+</style>

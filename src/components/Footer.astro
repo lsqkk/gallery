@@ -1,0 +1,102 @@
+---
+interface FooterData {
+  text: string;
+  russian: string;
+}
+
+interface Props {
+  footer: FooterData;
+}
+
+const { footer } = Astro.props;
+---
+
+<footer class="footer">
+  <div class="container">
+    <div class="footer__content">
+      <!-- Left: Navigation links -->
+      <div class="footer__links">
+        <a href="https://github.com/lsqkk" target="_blank" rel="noopener noreferrer" class="footer__link">GitHub</a>
+        <a href="https://lsqkk.github.io" target="_blank" rel="noopener noreferrer" class="footer__link">Blog</a>
+        <a href="https://aca.130923.xyz" target="_blank" rel="noopener noreferrer" class="footer__link">Academia</a>
+      </div>
+
+      <!-- Center: Cyrillic decorative text -->
+      <p class="footer__russian" aria-hidden="true">{footer.russian}</p>
+
+      <!-- Right: Copyright -->
+      <p class="footer__text">{footer.text}</p>
+    </div>
+
+    <!-- Thick top border line -->
+    <div class="footer__border"></div>
+  </div>
+</footer>
+
+<style>
+  .footer {
+    position: relative;
+    z-index: 1;
+    background: var(--black);
+    color: var(--white-off);
+    padding: 48px 6vw 36px;
+  }
+
+  .footer .container {
+    max-width: 1280px;
+    margin: 0 auto;
+  }
+
+  .footer__border {
+    height: var(--border-thicker);
+    background: var(--red);
+    margin-bottom: 32px;
+  }
+
+  .footer__content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 20px;
+  }
+
+  .footer__links {
+    display: flex;
+    gap: 24px;
+  }
+
+  .footer__link {
+    font-family: var(--font-display);
+    font-size: 0.85rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--white-off);
+    opacity: 0.6;
+    transition: opacity 0.2s ease;
+  }
+
+  .footer__link:hover {
+    opacity: 1;
+  }
+
+  .footer__russian {
+    font-family: var(--font-display);
+    font-size: 0.8rem;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--gold);
+    opacity: 0.3;
+  }
+
+  .footer__text {
+    font-size: 0.75rem;
+    opacity: 0.4;
+    letter-spacing: 0.05em;
+  }
+
+  @media (max-width: 640px) {
+    .footer__content { flex-direction: column; align-items: flex-start; gap: 16px; }
+    .footer__russian { order: -1; }
+  }
+</style>
