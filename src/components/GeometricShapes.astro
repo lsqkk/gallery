@@ -6,11 +6,21 @@
   <!-- 2. Black square, rotated, upper-left -->
   <div class="geo geo-square"></div>
 
-  <!-- 3. Thick circle ring, lower-left -->
-  <div class="geo geo-ring"></div>
+  <!-- 3. Clock ring, lower-left -->
+  <div class="geo geo-ring" id="geo-ring">
+    <div class="clock-face" id="clock-face">
+      <div class="clock-hand clock-hour" id="clock-hour"></div>
+      <div class="clock-hand clock-minute" id="clock-minute"></div>
+      <div class="clock-hand clock-second" id="clock-second"></div>
+      <div class="clock-pin"></div>
+    </div>
+    <div class="clock-digital" id="clock-digital">00:00</div>
+  </div>
 
-  <!-- 4. Gold horizontal bar, top-right -->
-  <div class="geo geo-bar-h" data-parallax="0.3"></div>
+  <!-- 4. Gold horizontal bar, top-right — draggable -->
+  <div class="geo geo-bar-h" id="geo-bar-h">
+    <div class="bar-pivot" aria-hidden="true"></div>
+  </div>
 
   <!-- 5. Vertical thin line, left -->
   <div class="geo geo-bar-v" data-parallax="0.55"></div>
@@ -38,6 +48,108 @@
   <div class="geo geo-watermark-2" data-parallax="0.15">СОВЕТСКИЙ</div>
 </div>
 
+<script>
+(function() {
+  'use strict';
+
+  /* ========== CLOCK ========== */
+  var hourHand = document.getElementById('clock-hour');
+  var minHand = document.getElementById('clock-minute');
+  var secHand = document.getElementById('clock-second');
+  var clockDigital = document.getElementById('clock-digital');
+
+  if (hourHand) {
+    function tick() {
+      var now = new Date();
+      var h = now.getHours() % 12;
+      var m = now.getMinutes();
+      var s = now.getSeconds();
+
+      hourHand.style.transform = 'rotate(' + (h * 30 + m * 0.5) + 'deg)';
+      minHand.style.transform = 'rotate(' + (m * 6 + s * 0.1) + 'deg)';
+      secHand.style.transform = 'rotate(' + (s * 6) + 'deg)';
+
+      if (clockDigital) {
+        var hh = String(now.getHours()).padStart(2, '0');
+        var mm = String(now.getMinutes()).padStart(2, '0');
+        clockDigital.textContent = hh + ':' + mm;
+      }
+    }
+    tick();
+    setInterval(tick, 1000);
+  }
+
+  /* ========== DRAGGABLE GOLD BAR ========== */
+  var bar = document.getElementById('geo-bar-h');
+  if (bar) {
+    var isDragging = false;
+    var currentAngle = 0;
+    var offsetAngle = 0;
+
+    function getPivot(el) {
+      var rect = el.getBoundingClientRect();
+      return { x: rect.left + rect.width * 0.9, y: rect.top + rect.height / 2 };
+    }
+
+    function getAngle(el, cx, cy) {
+      var p = getPivot(el);
+      return Math.atan2(cy - p.y, cx - p.x) * (180 / Math.PI);
+    }
+
+    function onStart(e) {
+      var cx = e.clientX || (e.touches && e.touches[0].clientX);
+      var cy = e.clientY || (e.touches && e.touches[0].clientY);
+      if (cx == null) return;
+      isDragging = true;
+      offsetAngle = getAngle(bar, cx, cy) - currentAngle;
+      if (e.cancelable) e.preventDefault();
+    }
+
+    function onMove(e) {
+      if (!isDragging) return;
+      var cx = e.clientX || (e.touches && e.touches[0].clientX);
+      var cy = e.clientY || (e.touches && e.touches[0].clientY);
+      if (cx == null) return;
+      currentAngle = getAngle(bar, cx, cy) - offsetAngle;
+      bar.style.transform = 'rotate(' + currentAngle + 'deg)';
+    }
+
+    function onEnd() {
+      if (!isDragging) return;
+      isDragging = false;
+
+      var pos = currentAngle;
+      var vel = 0;
+      var STIFFNESS = 0.012;
+      var DAMPING = 0.86;
+
+      function spring() {
+        var force = -STIFFNESS * pos;
+        vel = (vel + force) * DAMPING;
+        pos += vel;
+
+        bar.style.transform = 'rotate(' + pos + 'deg)';
+
+        if (Math.abs(pos) > 0.1 || Math.abs(vel) > 0.05) {
+          requestAnimationFrame(spring);
+        } else {
+          bar.style.transform = '';
+          currentAngle = 0;
+        }
+      }
+      requestAnimationFrame(spring);
+    }
+
+    bar.addEventListener('mousedown', onStart);
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onEnd);
+    bar.addEventListener('touchstart', onStart, { passive: true });
+    document.addEventListener('touchmove', onMove, { passive: true });
+    document.addEventListener('touchend', onEnd);
+  }
+})();
+</script>
+
 <style>
   /* ---- Triangle (right side) ---- */
   .geo-triangle {
@@ -63,7 +175,7 @@
     animation: slow-spin 150s linear infinite;
   }
 
-  /* ---- Circle Ring ---- */
+  /* ---- Circle Ring / Clock ---- */
   .geo-ring {
     width: 300px;
     height: 300px;
@@ -72,16 +184,115 @@
     border: 16px solid var(--black);
     border-radius: 50%;
     opacity: 0.7;
-    animation: ring-pulse 20s ease-in-out infinite;
+    pointer-events: auto;
+    cursor: default;
+    z-index: 5;
   }
 
-  /* ---- Gold Horizontal Bar ---- */
+  .clock-face {
+    position: absolute;
+    inset: 20px;
+    border-radius: 50%;
+    transition: opacity 0.35s ease;
+  }
+
+  .geo-ring:hover .clock-face {
+    opacity: 0;
+  }
+
+  .clock-hand {
+    position: absolute;
+    bottom: 50%;
+    left: 50%;
+    transform-origin: bottom center;
+    border-radius: 2px;
+  }
+
+  .clock-hour {
+    width: 4px;
+    height: 28%;
+    background: var(--black);
+    margin-left: -2px;
+  }
+
+  .clock-minute {
+    width: 2.5px;
+    height: 38%;
+    background: var(--black);
+    margin-left: -1.25px;
+  }
+
+  .clock-second {
+    width: 1.5px;
+    height: 44%;
+    background: var(--red);
+    margin-left: -0.75px;
+  }
+
+  .clock-pin {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 6px;
+    height: 6px;
+    margin: -3px;
+    background: var(--red);
+    border-radius: 50%;
+    z-index: 1;
+  }
+
+  .clock-digital {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-family: var(--font-display);
+    font-size: 1.6rem;
+    letter-spacing: 0.08em;
+    color: var(--black);
+    opacity: 0;
+    transition: opacity 0.35s ease;
+    pointer-events: none;
+  }
+
+  .geo-ring:hover .clock-digital {
+    opacity: 1;
+  }
+
+  /* ---- Gold Horizontal Bar (draggable) ---- */
   .geo-bar-h {
     width: 38%;
     height: 18px;
     top: 5%;
     right: 4%;
     background: var(--gold);
+    pointer-events: auto;
+    cursor: grab;
+    transform-origin: 90% center;
+    z-index: 5;
+    position: absolute;
+  }
+
+  .geo-bar-h:active {
+    cursor: grabbing;
+  }
+
+  .bar-pivot {
+    position: absolute;
+    right: 10%;
+    top: 50%;
+    width: 10px;
+    height: 10px;
+    margin: -5px 0 0 -5px;
+    background: var(--red);
+    border-radius: 50%;
+    opacity: 0.3;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+  }
+
+  .geo-bar-h:hover .bar-pivot {
+    opacity: 0.6;
   }
 
   /* ---- Vertical Thin Line ---- */
@@ -189,6 +400,8 @@
     .geo-triangle { width: 70vw; height: 50vh; top: 30vh; }
     .geo-square { width: 100px; height: 100px; top: 10%; }
     .geo-ring { width: 180px; height: 180px; border-width: 10px; }
+    .clock-digital { font-size: 1rem; }
+    .clock-face { inset: 12px; }
     .geo-bar-h { height: 12px; }
     .geo-bar-v { left: 92%; }
     .geo-regmark { right: 6%; }
@@ -203,10 +416,5 @@
   @keyframes breathe {
     0%, 100% { opacity: 0.85; }
     50%      { opacity: 0.65; }
-  }
-
-  @keyframes ring-pulse {
-    0%, 100% { transform: scale(1);   opacity: 0.7; }
-    50%      { transform: scale(1.04); opacity: 0.5; }
   }
 </style>

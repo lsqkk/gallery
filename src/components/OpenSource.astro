@@ -15,11 +15,11 @@
 
 <script>
 (function() {
-  const EXCLUDED = ['guide-vehicle', 'lsqkk.github.io', 'image', 'lsqkk', 'gallery'];
-  const grid = document.getElementById('gh-repos');
-  const loading = document.getElementById('gh-loading');
+  var EXCLUDED = ['guide-vehicle', 'lsqkk.github.io', 'image', 'lsqkk', 'gallery'];
+  var grid = document.getElementById('gh-repos');
+  var loading = document.getElementById('gh-loading');
 
-  const LANG_COLORS = {
+  var LANG_COLORS = {
     'JavaScript': '#f1e05a',
     'TypeScript': '#3178c6',
     'Python': '#3572A5',
@@ -41,16 +41,16 @@
 
   async function loadRepos() {
     try {
-      const res = await fetch('https://api.github.com/users/lsqkk/repos?sort=updated&per_page=30&type=owner');
+      var res = await fetch('https://api.github.com/users/lsqkk/repos?sort=updated&per_page=30&type=owner');
       if (!res.ok) throw new Error('HTTP ' + res.status);
-      const repos = await res.json();
+      var repos = await res.json();
 
-      const filtered = repos
-        .filter(r => !EXCLUDED.includes(r.name) && !r.fork)
-        .sort((a, b) => b.stargazers_count - a.stargazers_count);
+      var filtered = repos
+        .filter(function(r) { return !EXCLUDED.includes(r.name) && !r.fork; })
+        .sort(function(a, b) { return b.stargazers_count - a.stargazers_count; });
 
       if (filtered.length === 0) {
-        loading.textContent = '— Нет репозиториев —';
+        loading.textContent = '— No repositories —';
         return;
       }
 
@@ -64,20 +64,24 @@
         card.className = 'repo-card';
         card.setAttribute('data-reveal', '');
 
-        var desc = repo.description || '—';
+        var desc = repo.description || 'No description';
 
-        var html = '<div class="repo-card__body">';
-        html += '<h3 class="repo-card__name">' + repo.name + '</h3>';
-        html += '<p class="repo-card__desc">' + escapeHtml(desc) + '</p>';
-        html += '</div>';
-        html += '<div class="repo-card__meta">';
+        var html = '<div class="repo-card__top">';
+        html += '<h3 class="repo-card__name">' + escapeHtml(repo.name) + '</h3>';
+        html += '<div class="repo-card__lang">';
         if (repo.language) {
-          html += '<span class="repo-card__lang"><span class="repo-card__dot" style="background:' + langColor(repo.language) + '"></span>' + repo.language + '</span>';
+          html += '<span class="repo-card__dot" style="background:' + langColor(repo.language) + '"></span>';
+          html += '<span class="repo-card__lang-text">' + repo.language + '</span>';
         }
-        html += '<span class="repo-card__stars">&#9733; ' + repo.stargazers_count + '</span>';
+        html += '</div>';
+        html += '</div>';
+        html += '<p class="repo-card__desc">' + escapeHtml(desc) + '</p>';
+        html += '<div class="repo-card__meta">';
+        html += '<span class="repo-card__stat">&#9733; ' + repo.stargazers_count + '</span>';
         if (repo.forks_count > 0) {
-          html += '<span class="repo-card__forks">⑂ ' + repo.forks_count + '</span>';
+          html += '<span class="repo-card__stat">⑂ ' + repo.forks_count + '</span>';
         }
+        html += '<span class="repo-card__updated">' + formatDate(repo.updated_at) + '</span>';
         html += '<span class="repo-card__arrow">→</span>';
         html += '</div>';
         html += '<div class="crop-mark crop-mark--tl"></div>';
@@ -87,7 +91,7 @@
         grid.appendChild(card);
       });
 
-      // Trigger reveal on newly added cards
+      // Trigger reveal observer
       requestAnimationFrame(function() {
         var observer = new IntersectionObserver(function(entries) {
           entries.forEach(function(entry) {
@@ -97,15 +101,25 @@
             }
           });
         }, { threshold: 0.08, rootMargin: '0px 0px -40px 0px' });
-
         grid.querySelectorAll('.repo-card').forEach(function(el) {
           observer.observe(el);
         });
       });
 
     } catch (err) {
-      loading.textContent = '— Не удалось загрузить репозитории —';
+      loading.textContent = '— Failed to load repositories —';
     }
+  }
+
+  function formatDate(dateStr) {
+    if (!dateStr) return '';
+    var d = new Date(dateStr);
+    var now = new Date();
+    var diff = Math.floor((now - d) / (1000 * 60 * 60 * 24));
+    if (diff === 0) return 'today';
+    if (diff === 1) return 'yesterday';
+    if (diff < 30) return diff + 'd ago';
+    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
   }
 
   function escapeHtml(str) {
@@ -132,8 +146,8 @@
 
   .opensource__grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: 16px;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 20px;
   }
 
   /* ---- Repo Card ---- */
@@ -141,18 +155,19 @@
     position: relative;
     display: flex;
     flex-direction: column;
-    justify-content: space-between;
+    gap: 10px;
     border: 2px solid var(--black);
-    padding: 20px;
+    padding: 24px 24px 18px;
     background: var(--white-warm);
     text-decoration: none;
     color: inherit;
-    min-height: 150px;
+    min-height: 140px;
     opacity: 0;
     transform: translateY(28px);
     transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1),
                 transform 0.6s cubic-bezier(0.16, 1, 0.3, 1),
-                box-shadow 0.25s ease;
+                box-shadow 0.25s ease,
+                border-color 0.25s ease;
   }
 
   .repo-card.revealed {
@@ -161,83 +176,106 @@
   }
 
   .repo-card:hover {
-    box-shadow: -4px 4px 0 var(--gold);
+    box-shadow: -5px 5px 0 var(--gold);
     border-color: var(--gold);
   }
 
-  .repo-card__body {
-    flex: 1;
+  .repo-card__top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
   }
 
   .repo-card__name {
     font-family: var(--font-body);
-    font-size: clamp(0.85rem, 1.1vw, 1rem);
-    font-weight: 600;
-    letter-spacing: 0.02em;
-    margin-bottom: 0.4rem;
+    font-size: clamp(0.95rem, 1.2vw, 1.1rem);
+    font-weight: 700;
+    letter-spacing: 0.01em;
     color: var(--black);
     text-transform: none;
+    margin: 0;
+    line-height: 1.3;
+    word-break: break-word;
+  }
+
+  .repo-card__lang {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    flex-shrink: 0;
+    margin-top: 3px;
+  }
+
+  .repo-card__dot {
+    display: inline-block;
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .repo-card__lang-text {
+    font-family: var(--font-body);
+    font-size: 0.7rem;
+    font-weight: 500;
+    color: var(--black);
+    opacity: 0.6;
   }
 
   .repo-card__desc {
-    font-size: clamp(0.7rem, 0.85vw, 0.8rem);
+    font-size: clamp(0.78rem, 0.9vw, 0.85rem);
     color: var(--black);
-    opacity: 0.5;
-    line-height: 1.5;
-    max-width: 95%;
+    opacity: 0.55;
+    line-height: 1.55;
+    margin: 0;
     display: -webkit-box;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
+    flex: 1;
   }
 
   .repo-card__meta {
     display: flex;
     align-items: center;
-    gap: 10px;
-    margin-top: 1rem;
+    gap: 14px;
+    margin-top: 4px;
     flex-wrap: wrap;
+    border-top: 1px solid rgba(17, 17, 17, 0.08);
+    padding-top: 10px;
   }
 
-  .repo-card__lang {
+  .repo-card__stat {
     font-family: var(--font-body);
-    font-size: 0.65rem;
+    font-size: 0.72rem;
     font-weight: 500;
-    letter-spacing: 0.05em;
+    color: var(--black);
+    opacity: 0.5;
+    letter-spacing: 0.02em;
     display: inline-flex;
     align-items: center;
-    gap: 4px;
-    color: var(--black);
-    opacity: 0.7;
+    gap: 3px;
   }
 
-  .repo-card__dot {
-    display: inline-block;
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-  }
-
-  .repo-card__stars,
-  .repo-card__forks {
+  .repo-card__updated {
     font-family: var(--font-body);
     font-size: 0.65rem;
-    font-weight: 500;
+    font-weight: 400;
     color: var(--black);
-    opacity: 0.55;
-    letter-spacing: 0.03em;
+    opacity: 0.35;
+    margin-right: auto;
   }
 
   .repo-card__arrow {
-    margin-left: auto;
-    font-size: 0.9rem;
+    font-size: 1rem;
     color: var(--gold);
-    opacity: 0.4;
+    opacity: 0.35;
     transition: transform 0.2s ease, opacity 0.2s ease;
   }
 
   .repo-card:hover .repo-card__arrow {
-    transform: translateX(4px);
+    transform: translateX(5px);
     opacity: 0.8;
   }
 
@@ -247,8 +285,8 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    gap: 6px;
-    padding: 40px 0;
+    gap: 8px;
+    padding: 48px 0;
     font-family: var(--font-body);
     font-size: 1rem;
     letter-spacing: 0.3em;
@@ -276,6 +314,10 @@
   @media (max-width: 640px) {
     .opensource__grid {
       grid-template-columns: 1fr;
+      gap: 16px;
+    }
+    .repo-card {
+      padding: 18px 18px 14px;
     }
     .repo-card__desc {
       -webkit-line-clamp: 3;
