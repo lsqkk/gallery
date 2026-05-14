@@ -6,6 +6,22 @@
   <!-- 2. Black square, rotated, upper-left -->
   <div class="geo geo-square"></div>
 
+  <!-- 3. Clock ring, lower-left -->
+  <div class="geo geo-ring" id="geo-ring">
+    <div class="clock-face" id="clock-face">
+      <div class="clock-hand clock-hour" id="clock-hour"></div>
+      <div class="clock-hand clock-minute" id="clock-minute"></div>
+      <div class="clock-hand clock-second" id="clock-second"></div>
+      <div class="clock-pin"></div>
+    </div>
+    <div class="clock-digital" id="clock-digital">00:00</div>
+  </div>
+
+  <!-- 4. Gold horizontal bar, near registration mark — draggable -->
+  <div class="geo geo-bar-h" id="geo-bar-h">
+    <div class="bar-pivot" aria-hidden="true"></div>
+  </div>
+
   <!-- 5. Vertical thin line, left -->
   <div class="geo geo-bar-v" data-parallax="0.55"></div>
 
@@ -30,25 +46,6 @@
 
   <!-- 11. Second watermark — parallax layer -->
   <div class="geo geo-watermark-2" data-parallax="0.15">СОВЕТСКИЙ</div>
-</div>
-
-<!-- Interactive geometric elements — above content for mouse events -->
-<div class="layer-interactive" aria-hidden="true">
-  <!-- 3. Clock ring, lower-left -->
-  <div class="geo geo-ring" id="geo-ring">
-    <div class="clock-face" id="clock-face">
-      <div class="clock-hand clock-hour" id="clock-hour"></div>
-      <div class="clock-hand clock-minute" id="clock-minute"></div>
-      <div class="clock-hand clock-second" id="clock-second"></div>
-      <div class="clock-pin"></div>
-    </div>
-    <div class="clock-digital" id="clock-digital">00:00</div>
-  </div>
-
-  <!-- 4. Gold horizontal bar, near registration mark — draggable -->
-  <div class="geo geo-bar-h" id="geo-bar-h">
-    <div class="bar-pivot" aria-hidden="true"></div>
-  </div>
 </div>
 
 <script>
@@ -86,28 +83,22 @@
   var bar = document.getElementById('geo-bar-h');
   if (bar) {
     var isDragging = false;
-    var currentAngle = 0;
-    var offsetAngle = 0;
-    var startX = 0, startY = 0;
-
-    function getPivot(el) {
-      var rect = el.getBoundingClientRect();
-      return { x: rect.left + rect.width * 0.9, y: rect.top + rect.height / 2 };
-    }
-
-    function getAngleFromPivot(el, cx, cy) {
-      var p = getPivot(el);
-      return Math.atan2(cy - p.y, cx - p.x) * (180 / Math.PI);
-    }
+    var dragAngle = 0;
+    var pivotX = 0, pivotY = 0;
+    var startAngleOffset = 0;
 
     function onStart(e) {
       var cx = e.clientX || (e.touches && e.touches[0].clientX);
       var cy = e.clientY || (e.touches && e.touches[0].clientY);
       if (cx == null) return;
+
+      // Capture pivot ONCE at drag start — prevents flickering from rect changes during rotation
+      var rect = bar.getBoundingClientRect();
+      pivotX = rect.left + rect.width * 0.9;
+      pivotY = rect.top + rect.height / 2;
+
+      startAngleOffset = Math.atan2(cy - pivotY, cx - pivotX) * (180 / Math.PI) - dragAngle;
       isDragging = true;
-      startX = cx;
-      startY = cy;
-      offsetAngle = getAngleFromPivot(bar, cx, cy) - currentAngle;
       bar.style.cursor = 'grabbing';
       if (e.cancelable) e.preventDefault();
     }
@@ -117,8 +108,11 @@
       var cx = e.clientX || (e.touches && e.touches[0].clientX);
       var cy = e.clientY || (e.touches && e.touches[0].clientY);
       if (cx == null) return;
-      currentAngle = getAngleFromPivot(bar, cx, cy) - offsetAngle;
-      bar.style.transform = 'rotate(' + currentAngle + 'deg)';
+
+      var raw = Math.atan2(cy - pivotY, cx - pivotX) * (180 / Math.PI) - startAngleOffset;
+      // Clamp to prevent extreme angles that cause visual glitches
+      dragAngle = Math.max(-100, Math.min(100, raw));
+      bar.style.transform = 'rotate(' + dragAngle + 'deg)';
     }
 
     function onEnd() {
@@ -126,10 +120,11 @@
       isDragging = false;
       bar.style.cursor = 'grab';
 
-      var pos = currentAngle;
+      var pos = dragAngle;
       var vel = 0;
-      var STIFFNESS = 0.018;
-      var DAMPING = 0.88;
+      // Higher stiffness + moderate damping = snappy settle without jitter
+      var STIFFNESS = 0.03;
+      var DAMPING = 0.85;
 
       function spring() {
         var force = -STIFFNESS * pos;
@@ -138,11 +133,11 @@
 
         bar.style.transform = 'rotate(' + pos + 'deg)';
 
-        if (Math.abs(pos) > 0.15 || Math.abs(vel) > 0.08) {
+        if (Math.abs(pos) > 0.4 || Math.abs(vel) > 0.1) {
           requestAnimationFrame(spring);
         } else {
           bar.style.transform = '';
-          currentAngle = 0;
+          dragAngle = 0;
         }
       }
       requestAnimationFrame(spring);
@@ -183,15 +178,6 @@
     animation: slow-spin 150s linear infinite;
   }
 
-  /* ---- Interactive Layer ---- */
-  .layer-interactive {
-    position: fixed;
-    inset: 0;
-    z-index: 2;
-    pointer-events: none;
-    overflow: hidden;
-  }
-
   /* ---- Circle Ring / Clock ---- */
   .geo-ring {
     width: 300px;
@@ -203,7 +189,6 @@
     opacity: 0.7;
     pointer-events: auto;
     cursor: default;
-    z-index: 5;
   }
 
   .clock-face {
@@ -289,7 +274,6 @@
     pointer-events: auto;
     cursor: grab;
     transform-origin: 90% center;
-    z-index: 5;
     position: absolute;
   }
 
