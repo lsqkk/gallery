@@ -108,6 +108,7 @@
     var dragAngle = 0;
     var pivotX = 0, pivotY = 0;
     var startAngleOffset = 0;
+    var springId = null;
 
     // Bar hover: invisible hit target controls visible bar-pivot
     barHT.addEventListener('mouseenter', function() { barVis.classList.add('bar-active'); });
@@ -118,10 +119,19 @@
       var cy = e.clientY || (e.touches && e.touches[0].clientY);
       if (cx == null) return;
 
-      // Pivot from the VISIBLE bar (behind content, but rect is still accurate)
+      // Cancel any running spring immediately
+      if (springId) { cancelAnimationFrame(springId); springId = null; }
+
+      // Temporarily clear transform to get natural bounding rect,
+      // then restore — happens in the same JS frame, no visual flicker.
+      // This prevents pivot drift when the bar is still rotated from
+      // a previous drag that hasn't fully settled.
+      var saved = barVis.style.transform;
+      barVis.style.transform = '';
       var rect = barVis.getBoundingClientRect();
       pivotX = rect.left + rect.width * 0.9;
       pivotY = rect.top + rect.height / 2;
+      barVis.style.transform = saved;
 
       startAngleOffset = Math.atan2(cy - pivotY, cx - pivotX) * (180 / Math.PI) - dragAngle;
       isDragging = true;
@@ -160,13 +170,14 @@
         barVis.style.transform = 'rotate(' + pos + 'deg)';
 
         if (Math.abs(pos) > 0.4 || Math.abs(vel) > 0.1) {
-          requestAnimationFrame(spring);
+          springId = requestAnimationFrame(spring);
         } else {
           barVis.style.transform = '';
           dragAngle = 0;
+          springId = null;
         }
       }
-      requestAnimationFrame(spring);
+      springId = requestAnimationFrame(spring);
     }
 
     barHT.addEventListener('mousedown', onStart);
