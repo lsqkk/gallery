@@ -6,22 +6,6 @@
   <!-- 2. Black square, rotated, upper-left -->
   <div class="geo geo-square"></div>
 
-  <!-- 3. Clock ring, lower-left -->
-  <div class="geo geo-ring" id="geo-ring">
-    <div class="clock-face" id="clock-face">
-      <div class="clock-hand clock-hour" id="clock-hour"></div>
-      <div class="clock-hand clock-minute" id="clock-minute"></div>
-      <div class="clock-hand clock-second" id="clock-second"></div>
-      <div class="clock-pin"></div>
-    </div>
-    <div class="clock-digital" id="clock-digital">00:00</div>
-  </div>
-
-  <!-- 4. Gold horizontal bar, top-right — draggable -->
-  <div class="geo geo-bar-h" id="geo-bar-h">
-    <div class="bar-pivot" aria-hidden="true"></div>
-  </div>
-
   <!-- 5. Vertical thin line, left -->
   <div class="geo geo-bar-v" data-parallax="0.55"></div>
 
@@ -46,6 +30,25 @@
 
   <!-- 11. Second watermark — parallax layer -->
   <div class="geo geo-watermark-2" data-parallax="0.15">СОВЕТСКИЙ</div>
+</div>
+
+<!-- Interactive geometric elements — above content for mouse events -->
+<div class="layer-interactive" aria-hidden="true">
+  <!-- 3. Clock ring, lower-left -->
+  <div class="geo geo-ring" id="geo-ring">
+    <div class="clock-face" id="clock-face">
+      <div class="clock-hand clock-hour" id="clock-hour"></div>
+      <div class="clock-hand clock-minute" id="clock-minute"></div>
+      <div class="clock-hand clock-second" id="clock-second"></div>
+      <div class="clock-pin"></div>
+    </div>
+    <div class="clock-digital" id="clock-digital">00:00</div>
+  </div>
+
+  <!-- 4. Gold horizontal bar, near registration mark — draggable -->
+  <div class="geo geo-bar-h" id="geo-bar-h">
+    <div class="bar-pivot" aria-hidden="true"></div>
+  </div>
 </div>
 
 <script>
@@ -85,13 +88,14 @@
     var isDragging = false;
     var currentAngle = 0;
     var offsetAngle = 0;
+    var startX = 0, startY = 0;
 
     function getPivot(el) {
       var rect = el.getBoundingClientRect();
       return { x: rect.left + rect.width * 0.9, y: rect.top + rect.height / 2 };
     }
 
-    function getAngle(el, cx, cy) {
+    function getAngleFromPivot(el, cx, cy) {
       var p = getPivot(el);
       return Math.atan2(cy - p.y, cx - p.x) * (180 / Math.PI);
     }
@@ -101,7 +105,10 @@
       var cy = e.clientY || (e.touches && e.touches[0].clientY);
       if (cx == null) return;
       isDragging = true;
-      offsetAngle = getAngle(bar, cx, cy) - currentAngle;
+      startX = cx;
+      startY = cy;
+      offsetAngle = getAngleFromPivot(bar, cx, cy) - currentAngle;
+      bar.style.cursor = 'grabbing';
       if (e.cancelable) e.preventDefault();
     }
 
@@ -110,18 +117,19 @@
       var cx = e.clientX || (e.touches && e.touches[0].clientX);
       var cy = e.clientY || (e.touches && e.touches[0].clientY);
       if (cx == null) return;
-      currentAngle = getAngle(bar, cx, cy) - offsetAngle;
+      currentAngle = getAngleFromPivot(bar, cx, cy) - offsetAngle;
       bar.style.transform = 'rotate(' + currentAngle + 'deg)';
     }
 
     function onEnd() {
       if (!isDragging) return;
       isDragging = false;
+      bar.style.cursor = 'grab';
 
       var pos = currentAngle;
       var vel = 0;
-      var STIFFNESS = 0.012;
-      var DAMPING = 0.86;
+      var STIFFNESS = 0.018;
+      var DAMPING = 0.88;
 
       function spring() {
         var force = -STIFFNESS * pos;
@@ -130,7 +138,7 @@
 
         bar.style.transform = 'rotate(' + pos + 'deg)';
 
-        if (Math.abs(pos) > 0.1 || Math.abs(vel) > 0.05) {
+        if (Math.abs(pos) > 0.15 || Math.abs(vel) > 0.08) {
           requestAnimationFrame(spring);
         } else {
           bar.style.transform = '';
@@ -173,6 +181,15 @@
     opacity: 0.3;
     transform: rotate(28deg);
     animation: slow-spin 150s linear infinite;
+  }
+
+  /* ---- Interactive Layer ---- */
+  .layer-interactive {
+    position: fixed;
+    inset: 0;
+    z-index: 2;
+    pointer-events: none;
+    overflow: hidden;
   }
 
   /* ---- Circle Ring / Clock ---- */
@@ -247,24 +264,27 @@
     left: 50%;
     transform: translate(-50%, -50%);
     font-family: var(--font-display);
-    font-size: 1.6rem;
-    letter-spacing: 0.08em;
+    font-size: 1.8rem;
+    letter-spacing: 0.1em;
     color: var(--black);
     opacity: 0;
     transition: opacity 0.35s ease;
     pointer-events: none;
+    background: rgba(237, 232, 221, 0.85);
+    padding: 4px 10px;
+    border-radius: 2px;
   }
 
   .geo-ring:hover .clock-digital {
     opacity: 1;
   }
 
-  /* ---- Gold Horizontal Bar (draggable) ---- */
+  /* ---- Gold Horizontal Bar (draggable, near registration mark) ---- */
   .geo-bar-h {
-    width: 38%;
-    height: 18px;
-    top: 5%;
-    right: 4%;
+    width: 22%;
+    height: 16px;
+    top: 12%;
+    right: 16%;
     background: var(--gold);
     pointer-events: auto;
     cursor: grab;
@@ -400,9 +420,9 @@
     .geo-triangle { width: 70vw; height: 50vh; top: 30vh; }
     .geo-square { width: 100px; height: 100px; top: 10%; }
     .geo-ring { width: 180px; height: 180px; border-width: 10px; }
-    .clock-digital { font-size: 1rem; }
+    .clock-digital { font-size: 1.1rem; padding: 2px 6px; }
     .clock-face { inset: 12px; }
-    .geo-bar-h { height: 12px; }
+    .geo-bar-h { height: 12px; width: 30%; top: 12%; right: 18%; }
     .geo-bar-v { left: 92%; }
     .geo-regmark { right: 6%; }
   }

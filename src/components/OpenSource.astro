@@ -135,19 +135,19 @@
 <style>
   .opensource__sub {
     font-family: var(--font-body);
-    font-size: 0.8rem;
+    font-size: 0.95rem;
     font-weight: 500;
     letter-spacing: 0.2em;
     text-transform: uppercase;
     color: var(--gold-dark);
-    margin-bottom: 3rem;
+    margin-bottom: 3.5rem;
     margin-top: -1.8rem;
   }
 
   .opensource__grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-    gap: 20px;
+    gap: 24px;
   }
 
   /* ---- Repo Card ---- */
@@ -155,9 +155,9 @@
     position: relative;
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 14px;
     border: 2px solid var(--black);
-    padding: 24px 24px 18px;
+    padding: 28px 28px 22px;
     background: var(--white-warm);
     text-decoration: none;
     color: inherit;
@@ -189,7 +189,7 @@
 
   .repo-card__name {
     font-family: var(--font-body);
-    font-size: clamp(0.95rem, 1.2vw, 1.1rem);
+    font-size: clamp(1.05rem, 1.3vw, 1.2rem);
     font-weight: 700;
     letter-spacing: 0.01em;
     color: var(--black);
@@ -217,17 +217,17 @@
 
   .repo-card__lang-text {
     font-family: var(--font-body);
-    font-size: 0.7rem;
+    font-size: 0.8rem;
     font-weight: 500;
     color: var(--black);
-    opacity: 0.6;
+    opacity: 0.7;
   }
 
   .repo-card__desc {
-    font-size: clamp(0.78rem, 0.9vw, 0.85rem);
+    font-size: clamp(0.88rem, 1vw, 0.95rem);
     color: var(--black);
-    opacity: 0.55;
-    line-height: 1.55;
+    opacity: 0.7;
+    line-height: 1.65;
     margin: 0;
     display: -webkit-box;
     -webkit-line-clamp: 2;
@@ -239,19 +239,19 @@
   .repo-card__meta {
     display: flex;
     align-items: center;
-    gap: 14px;
-    margin-top: 4px;
+    gap: 16px;
+    margin-top: 6px;
     flex-wrap: wrap;
-    border-top: 1px solid rgba(17, 17, 17, 0.08);
-    padding-top: 10px;
+    border-top: 1px solid rgba(17, 17, 17, 0.1);
+    padding-top: 12px;
   }
 
   .repo-card__stat {
     font-family: var(--font-body);
-    font-size: 0.72rem;
+    font-size: 0.8rem;
     font-weight: 500;
     color: var(--black);
-    opacity: 0.5;
+    opacity: 0.6;
     letter-spacing: 0.02em;
     display: inline-flex;
     align-items: center;
@@ -260,17 +260,17 @@
 
   .repo-card__updated {
     font-family: var(--font-body);
-    font-size: 0.65rem;
+    font-size: 0.72rem;
     font-weight: 400;
     color: var(--black);
-    opacity: 0.35;
+    opacity: 0.45;
     margin-right: auto;
   }
 
   .repo-card__arrow {
-    font-size: 1rem;
+    font-size: 1.15rem;
     color: var(--gold);
-    opacity: 0.35;
+    opacity: 0.45;
     transition: transform 0.2s ease, opacity 0.2s ease;
   }
 
@@ -314,10 +314,10 @@
   @media (max-width: 640px) {
     .opensource__grid {
       grid-template-columns: 1fr;
-      gap: 16px;
+      gap: 18px;
     }
     .repo-card {
-      padding: 18px 18px 14px;
+      padding: 22px 20px 18px;
     }
     .repo-card__desc {
       -webkit-line-clamp: 3;
