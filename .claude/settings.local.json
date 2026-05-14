@@ -5,7 +5,11 @@
       "Bash(npm run *)",
       "Bash(npx astro *)",
       "WebFetch(domain:localhost)",
-      "Bash(curl -s http://localhost:4321/gallery/)"
+      "Bash(curl -s http://localhost:4321/gallery/)",
+      "Bash(npx serve *)",
+      "Bash(curl -s http://localhost:3333/assets/index.BZzWZUne.css)",
+      "Bash(curl -s http://localhost:3333/)",
+      "Bash(pkill -f \"serve.*3333\")"
     ]
   }
 }
