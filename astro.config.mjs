@@ -5,6 +5,6 @@ export default defineConfig({
   base: '/gallery',
   outDir: 'dist',
   build: {
-    assets: '_assets',
+    assets: 'assets',
   },
 });
