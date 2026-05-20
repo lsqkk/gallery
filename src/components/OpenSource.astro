@@ -6,7 +6,6 @@
 
   <div class="proun-stage" id="proun-stage">
     <div class="proun-grid-bg" aria-hidden="true"></div>
-
     <div class="proun-scene" id="proun-scene">
       <div class="proun-cylinder" id="proun-cylinder">
         <div class="opensource__loading" id="gh-loading">
@@ -46,6 +45,14 @@
     return LANG_COLORS[lang] || '#6b6b6b';
   }
 
+  function shuffle(arr) {
+    for (var i = arr.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var t = arr[i]; arr[i] = arr[j]; arr[j] = t;
+    }
+    return arr;
+  }
+
   async function loadRepos() {
     try {
       var res = await fetch('https://api.github.com/users/lsqkk/repos?sort=updated&per_page=30&type=owner');
@@ -62,51 +69,47 @@
       }
 
       loading.style.display = 'none';
-
       var count = Math.min(filtered.length, 20);
 
-      // ——— FIXED LAYOUT ———
-      // 12 columns, 30° each. 8 columns with 2 cards, 4 columns with 1 card.
-      // Card height 72px → Y spacing 78px guarantees no overlap.
-      var LAYOUT = [
-        { n: 2, ys: [-39,  39] },  // col 0: pair
-        { n: 2, ys: [-39,  39] },  // col 1: pair
-        { n: 1, ys: [ -18 ] },     // col 2: single
-        { n: 2, ys: [-39,  39] },  // col 3: pair
-        { n: 2, ys: [-39,  39] },  // col 4: pair
-        { n: 1, ys: [  22 ] },     // col 5: single
-        { n: 2, ys: [-39,  39] },  // col 6: pair
-        { n: 2, ys: [-39,  39] },  // col 7: pair
-        { n: 1, ys: [ -10 ] },     // col 8: single
-        { n: 2, ys: [-39,  39] },  // col 9: pair
-        { n: 2, ys: [-39,  39] },  // col 10: pair
-        { n: 1, ys: [  30 ] },     // col 11: single
-      ];
+      // ——— LAYOUT ———
+      // R=440px | 12 cols × 30° | 2×3 + 4×2 + 6×1 = 20 cards, 0 empty columns
+      // No empty columns → no sudden big gaps
+      var COLS = 12;
+      var ANGLE_STEP = 360 / COLS;
 
-      var COLS = LAYOUT.length;          // 12
-      var ANGLE_STEP = 360 / COLS;       // 30°
-      var ANGLE_OFFSET = 12;
+      var colTypes = [];
+      for (var i = 0; i < 2; i++) colTypes.push(3);
+      for (var i = 0; i < 4; i++) colTypes.push(2);
+      for (var i = 0; i < 6; i++) colTypes.push(1);
+      shuffle(colTypes);
 
       var cardIdx = 0;
       for (var p = 0; p < COLS && cardIdx < count; p++) {
-        var col = LAYOUT[p];
-        for (var k = 0; k < col.n && cardIdx < count; k++, cardIdx++) {
-          var repo = filtered[cardIdx];
-          var colAngle = p * ANGLE_STEP + ANGLE_OFFSET;
-          var angle = colAngle + (Math.random() - 0.5) * 2.5;
-          var yPos = col.ys[k] + (Math.random() - 0.5) * 6;
+        var n = colTypes[p];
+        if (!n) continue;
 
+        var colAngle = p * ANGLE_STEP + (Math.random() - 0.5) * 6;
+
+        var ys = n === 3 ? [-120, 0, 120]
+               : n === 2 ? [-60, 60]
+               : [0];
+
+        for (var k = 0; k < n && cardIdx < count; k++, cardIdx++) {
+          var repo = filtered[cardIdx];
+          var yOffset = ys[Math.min(k, ys.length - 1)] + (Math.random() - 0.5) * 16;
+          var angle = colAngle + (Math.random() - 0.5) * 3;
           var colAccent = langColor(repo.language);
+
           var item = document.createElement('a');
           item.href = repo.html_url;
           item.target = '_blank';
           item.rel = 'noopener noreferrer';
           item.className = 'proun-item';
           item.style.setProperty('--a', angle.toFixed(1) + 'deg');
-          item.style.setProperty('--y', yPos.toFixed(0) + 'px');
+          item.style.setProperty('--y', yOffset.toFixed(0) + 'px');
           item.style.setProperty('--col', colAccent);
 
-          var shortName = repo.name.length > 14 ? repo.name.slice(0, 12) + '…' : repo.name;
+          var shortName = repo.name.length > 16 ? repo.name.slice(0, 14) + '…' : repo.name;
           var desc = repo.description || '—';
 
           item.innerHTML =
@@ -117,13 +120,7 @@
                 '<span class="proun-item__stars">★ ' + repo.stargazers_count + '</span>' +
               '</span>' +
               (repo.language ? '<span class="proun-item__lang"><span class="proun-item__dot" style="background:' + colAccent + '"></span>' + repo.language + '</span>' : '') +
-              '<span class="proun-item__hover">' +
-                '<span class="proun-item__desc">' + escapeHtml(desc) + '</span>' +
-                '<span class="proun-item__foot">' +
-                  (repo.forks_count > 0 ? '<span>⑂ ' + repo.forks_count + '</span>' : '') +
-                  '<span class="proun-item__arrow">→</span>' +
-                '</span>' +
-              '</span>' +
+              '<span class="proun-item__desc">' + escapeHtml(desc) + '</span>' +
             '</span>' +
             '<span class="crop-mark crop-mark--tl"></span>' +
             '<span class="crop-mark crop-mark--br"></span>';
@@ -134,25 +131,24 @@
         }
       }
 
-      // ——— Red Stars ———
-      for (var s = 0; s < 16; s++) {
+      // Stars
+      for (var s = 0; s < 24; s++) {
         var star = document.createElement('span');
         star.className = 'proun-star';
         star.textContent = '★';
         star.style.left = (1 + Math.random() * 98) + '%';
         star.style.top = (2 + Math.random() * 96) + '%';
-        star.style.fontSize = (5 + Math.random() * 18) + 'px';
-        star.style.animationDelay = (Math.random() * 7).toFixed(2) + 's';
-        star.style.animationDuration = (3 + Math.random() * 4).toFixed(1) + 's';
+        star.style.fontSize = (4 + Math.random() * 18) + 'px';
+        star.style.animationDelay = (Math.random() * 8).toFixed(2) + 's';
+        star.style.animationDuration = (3 + Math.random() * 5).toFixed(1) + 's';
         scene.appendChild(star);
       }
 
-      // ——— Auto-Rotation ———
-      var rotation = 0;
-      var isPaused = false;
-      var isDragging = false;
+      // Rotation — 0.13°/frame = 7.8°/sec, full lap in ~46 sec
+      // Between 30° columns: ~3.8 sec — steady flow no dead zones
+      var rotation = 0, isPaused = false, isDragging = false;
       var dragStartX = 0, dragStartRot = 0;
-      var SPEED = 0.10;
+      var SPEED = 0.13;
 
       function tick() {
         if (!isPaused && !isDragging) rotation = (rotation + SPEED) % 360;
@@ -187,17 +183,6 @@
     }
   }
 
-  function formatDate(dateStr) {
-    if (!dateStr) return '';
-    var d = new Date(dateStr);
-    var now = new Date();
-    var diff = Math.floor((now - d) / (1000 * 60 * 60 * 24));
-    if (diff === 0) return 'today';
-    if (diff === 1) return 'yesterday';
-    if (diff < 30) return diff + 'd ago';
-    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-  }
-
   function escapeHtml(str) {
     var div = document.createElement('div');
     div.appendChild(document.createTextNode(str));
@@ -211,32 +196,25 @@
 <style is:global>
   .opensource__sub {
     font-family: var(--font-body);
-    font-size: 0.95rem;
-    font-weight: 500;
-    letter-spacing: 0.2em;
-    text-transform: uppercase;
+    font-size: 0.95rem; font-weight: 500;
+    letter-spacing: 0.2em; text-transform: uppercase;
     color: var(--gold-dark);
-    margin-bottom: 3rem;
-    margin-top: -1.8rem;
+    margin-bottom: 3rem; margin-top: -1.8rem;
   }
 
-  /* =============================================
-     Proun Stage — 3D Cylinder Gallery
-     Fixed layout: 12 cols × 30°, R=720px
-     ============================================= */
+  /* ============================================
+     Proun Stage
+     R=440px | perspective=1000px | 12 cols × 30°
+     Card: 140×90px | 0 empty columns
+     ============================================ */
   .proun-stage {
-    position: relative;
-    max-width: 1260px;
-    margin: 0 auto;
-    padding: 0 4vw;
-    height: 520px;
-    overflow: visible;
+    position: relative; max-width: 1260px;
+    margin: 0 auto; padding: 0 4vw;
+    height: 540px; overflow: visible;
   }
 
   .proun-grid-bg {
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
+    position: absolute; inset: 0; pointer-events: none;
     opacity: 0.12;
     background-image:
       repeating-linear-gradient(28deg, transparent 0px, transparent 39px, rgba(196,164,74,0.05) 40px),
@@ -244,21 +222,17 @@
   }
 
   .proun-scene {
-    position: absolute;
-    inset: 0;
-    perspective: 1800px;
-    perspective-origin: 50% 48%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    position: absolute; inset: 0;
+    perspective: 1000px;
+    perspective-origin: 50% 46%;
+    display: flex; align-items: center; justify-content: center;
     cursor: grab;
   }
   .proun-scene:active { cursor: grabbing; }
 
   .proun-cylinder {
-    --R: 720px;
-    width: 0;
-    height: 0;
+    --R: 440px;
+    width: 0; height: 0;
     transform-style: preserve-3d;
     transform: rotateY(var(--rot, 0deg));
   }
@@ -267,14 +241,13 @@
   .proun-item {
     position: absolute;
     display: block;
-    width: 138px;
-    height: 72px;
-    margin-left: -69px;
-    margin-top: calc(-36px + var(--y, 0px));
+    width: 140px;
+    height: 90px;
+    margin-left: -70px;
+    margin-top: calc(-45px + var(--y, 0px));
     backface-visibility: hidden;
     transform: rotateY(var(--a, 0deg)) translateZ(var(--R));
-    text-decoration: none;
-    color: inherit;
+    text-decoration: none; color: inherit;
     border: 2px solid var(--black);
     background: var(--white-warm);
     box-shadow: -2px 2px 0 rgba(17,17,17,0.06);
@@ -285,15 +258,13 @@
   }
 
   .proun-item:hover {
-    transform: rotateY(var(--a,0deg)) translateZ(var(--R)) scale(1.18);
-    box-shadow: -6px 6px 0 var(--col, var(--gold));
+    transform: rotateY(var(--a,0deg)) translateZ(var(--R)) scale(1.15);
+    box-shadow: -8px 8px 0 var(--col, var(--gold));
     border-color: var(--col, var(--gold));
     z-index: 999;
   }
-  .proun-item:hover .proun-item__stripe { width: 5px; }
-  .proun-item:hover .proun-item__hover { opacity: 1; }
+  .proun-item:hover .proun-item__stripe { width: 4px; }
 
-  /* ——— Card internals ——— */
   .proun-item__stripe {
     position: absolute; top: 0; left: 0;
     width: 3px; height: 100%;
@@ -303,7 +274,7 @@
   .proun-item__inner {
     display: flex; flex-direction: column;
     height: 100%;
-    padding: 9px 7px 4px 11px;
+    padding: 8px 12px 6px 14px;
     position: relative;
     overflow: hidden;
   }
@@ -313,21 +284,25 @@
     justify-content: space-between;
     align-items: flex-start;
     gap: 4px;
+    flex-shrink: 0;
   }
 
   .proun-item__name {
     font-family: var(--font-display);
-    font-size: 0.7rem;
-    letter-spacing: 0.04em;
+    font-size: 0.62rem;
+    letter-spacing: 0.03em;
     text-transform: uppercase;
     color: var(--black);
-    word-break: break-word;
-    line-height: 1.1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.2;
+    min-width: 0;
   }
 
   .proun-item__stars {
     font-family: var(--font-body);
-    font-size: 0.6rem;
+    font-size: 0.52rem;
     font-weight: 600;
     color: var(--gold-dark);
     white-space: nowrap;
@@ -338,9 +313,10 @@
   .proun-item__lang {
     display: inline-flex; align-items: center; gap: 3px;
     font-family: var(--font-body);
-    font-size: 0.52rem; font-weight: 500;
+    font-size: 0.48rem; font-weight: 500;
     color: var(--black); opacity: 0.35;
-    margin-top: auto; padding-top: 1px;
+    margin-top: 1px;
+    flex-shrink: 0;
   }
 
   .proun-item__dot {
@@ -349,57 +325,41 @@
     border-radius: 50%; flex-shrink: 0;
   }
 
-  /* ——— Hover description (compact, never overflows) ——— */
-  .proun-item__hover {
-    position: absolute; bottom: 0; left: 0; right: 0;
-    padding: 14px 7px 4px 11px;
-    background: linear-gradient(to top,
-      var(--white-warm) 0%, var(--white-warm) 35%, transparent 100%);
-    opacity: 0;
-    transition: opacity 0.2s ease;
-    pointer-events: none;
-  }
-
   .proun-item__desc {
     font-family: var(--font-body);
-    font-size: 0.55rem; color: var(--black); opacity: 0.8;
-    margin: 0 0 1px; line-height: 1.3;
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    font-size: 0.48rem;
+    color: var(--black); opacity: 0.72;
+    margin: 2px 0 0;
+    line-height: 1.3;
+    flex: 1;
+    min-height: 0;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    word-break: break-word;
   }
 
-  .proun-item__foot {
-    display: flex; align-items: center; gap: 6px;
-    font-family: var(--font-body);
-    font-size: 0.48rem; color: var(--black); opacity: 0.45;
-  }
-
-  .proun-item__arrow {
-    margin-left: auto;
-    font-size: 0.6rem; color: var(--red); opacity: 0.5;
-    transition: opacity 0.2s ease;
-  }
-
-  /* =============================================
+  /* ============================================
      Red Stars
-     ============================================= */
+     ============================================ */
   .proun-star {
     position: absolute; color: var(--red);
     pointer-events: none; user-select: none; line-height: 1;
-    animation: proun-star-drift 4.5s ease-in-out infinite;
+    animation: star-drift 4.5s ease-in-out infinite;
     will-change: transform, opacity;
-    text-shadow: 0 0 12px rgba(204,0,0,0.25), 0 0 2px rgba(204,0,0,0.1);
+    text-shadow: 0 0 12px rgba(204,0,0,0.25);
     z-index: 3;
   }
-
-  @keyframes proun-star-drift {
-    0%, 100% { opacity: 0.04; transform: translateY(0) scale(1); }
-    35% { opacity: 0.16; transform: translateY(-5px) scale(1.08); }
+  @keyframes star-drift {
+    0%,100% { opacity: 0.04; transform: translateY(0) scale(1); }
+    35% { opacity: 0.18; transform: translateY(-5px) scale(1.08); }
     65% { opacity: 0.09; transform: translateY(-2px) scale(1.02); }
   }
 
-  /* =============================================
+  /* ============================================
      Loading
-     ============================================= */
+     ============================================ */
   .opensource__loading {
     position: absolute; left: 50%; top: 50%;
     transform: translate(-50%,-50%);
@@ -415,34 +375,35 @@
     40% { opacity: 0.8; transform: scale(1.1); }
   }
 
-  /* =============================================
+  /* ============================================
      Responsive
-     ============================================= */
+     ============================================ */
   @media (max-width: 860px) {
-    .proun-stage { height: 380px; }
-    .proun-scene { perspective: 1200px; }
-    .proun-cylinder { --R: 480px; }
-    .proun-item { width: 105px; height: 56px; margin-left: -53px; margin-top: calc(-28px + var(--y,0px)); }
-    .proun-item__inner { padding: 6px 5px 3px 9px; }
-    .proun-item__name { font-size: 0.58rem; }
-    .proun-item__stars { font-size: 0.5rem; }
-    .proun-item__lang { display: none; }
-    .proun-item__hover { display: none; }
+    .proun-stage { height: 400px; }
+    .proun-scene { perspective: 750px; }
+    .proun-cylinder { --R: 320px; }
+    .proun-item { width: 100px; height: 68px; margin-left: -50px; margin-top: calc(-34px + var(--y,0px)); }
+    .proun-item__inner { padding: 5px 8px 4px 10px; }
+    .proun-item__name { font-size: 0.5rem; }
+    .proun-item__stars { font-size: 0.42rem; }
+    .proun-item__lang { font-size: 0.4rem; }
+    .proun-item__desc { font-size: 0.4rem; -webkit-line-clamp: 2; }
     .proun-star { display: none; }
   }
 
   @media (max-width: 540px) {
-    .proun-stage { height: 260px; }
-    .proun-scene { perspective: 800px; perspective-origin: 50% 44%; }
-    .proun-cylinder { --R: 280px; }
-    .proun-item { width: 75px; height: 42px; margin-left: -38px; margin-top: calc(-21px + var(--y,0px)); border-width: 1.5px; }
-    .proun-item__inner { padding: 4px 4px 2px 6px; }
-    .proun-item__name { font-size: 0.42rem; }
-    .proun-item__stars { font-size: 0.38rem; }
+    .proun-stage { height: 280px; }
+    .proun-scene { perspective: 550px; perspective-origin: 50% 42%; }
+    .proun-cylinder { --R: 220px; }
+    .proun-item { width: 72px; height: 50px; margin-left: -36px; margin-top: calc(-25px + var(--y,0px)); border-width: 1.5px; }
+    .proun-item__inner { padding: 3px 6px 2px 8px; }
+    .proun-item__name { font-size: 0.38rem; }
+    .proun-item__stars { font-size: 0.32rem; }
     .proun-item__lang { display: none; }
+    .proun-item__desc { display: none; }
     .proun-item__stripe { width: 2px; }
-    .proun-item:hover { transform: rotateY(var(--a)) translateZ(var(--R)) scale(1.1); box-shadow: -3px 3px 0 var(--col, var(--gold)); }
-    .proun-item .crop-mark { width: 8px; height: 8px; border-width: 1.5px; }
+    .proun-item:hover { transform: rotateY(var(--a)) translateZ(var(--R)) scale(1.08); box-shadow: -3px 3px 0 var(--col, var(--gold)); }
+    .proun-item .crop-mark { width: 7px; height: 7px; border-width: 1.5px; }
     .proun-item .crop-mark--tl { border-width: 1.5px 0 0 1.5px; }
     .proun-item .crop-mark--br { border-width: 0 1.5px 1.5px 0; }
   }
