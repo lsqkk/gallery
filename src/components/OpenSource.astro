@@ -4,10 +4,9 @@
     <p class="opensource__sub" data-reveal>Открытый репозиторий · 开源仓库</p>
   </div>
 
-  <div class="proun-scene" id="proun-scene">
+  <div class="proun-stage" id="proun-stage">
     <div class="proun-grid-bg" aria-hidden="true"></div>
-
-    <div class="proun-grid" id="gh-repos">
+    <div class="proun-flow" id="gh-repos">
       <div class="opensource__loading" id="gh-loading">
         <span class="opensource__loading-dot">●</span>
         <span class="opensource__loading-dot">●</span>
@@ -22,7 +21,7 @@
   var EXCLUDED = ['guide-vehicle', 'lsqkk.github.io', 'image', 'lsqkk', 'gallery'];
   var grid = document.getElementById('gh-repos');
   var loading = document.getElementById('gh-loading');
-  var scene = document.getElementById('proun-scene');
+  var stage = document.getElementById('proun-stage');
 
   var LANG_COLORS = {
     'JavaScript': '#f1e05a',
@@ -60,77 +59,108 @@
       }
 
       loading.style.display = 'none';
-
       var total = filtered.length;
 
       filtered.forEach(function(repo, i) {
-        var sizeClass;
-        if (i < 2) sizeClass = 'proun-item--xl';
-        else if (i < 6) sizeClass = 'proun-item--lg';
-        else if (i < 14) sizeClass = 'proun-item--md';
-        else sizeClass = 'proun-item--sm';
-
-        var rot = (Math.random() - 0.5) * (sizeClass === 'proun-item--xl' ? 2 : sizeClass === 'proun-item--lg' ? 3 : sizeClass === 'proun-item--md' ? 5 : 6);
-        var yOff = Math.floor(Math.random() * 16 - 8);
-
         var col = langColor(repo.language);
+
+        // Size tiers: larger = more stars
+        var tier;
+        if (i < 2) tier = 'xl';
+        else if (i < 7) tier = 'lg';
+        else if (i < 15) tier = 'md';
+        else tier = 'sm';
+
+        // Base rotation (smaller items tilt more)
+        var baseRot = (Math.random() - 0.5) * (tier === 'xl' ? 1.5 : tier === 'lg' ? 3 : tier === 'md' ? 5 : 7);
+
+        // Y offset for staggered feel
+        var yOff = (Math.random() - 0.5) * 16;
+
+        // Subtle depth scale (some closer, some farther)
+        var depthScale = 1;
+        if (i % 4 === 0) depthScale = 1.05;
+        else if (i % 4 === 2) depthScale = 0.95;
 
         var item = document.createElement('a');
         item.href = repo.html_url;
         item.target = '_blank';
         item.rel = 'noopener noreferrer';
-        item.className = 'proun-item ' + sizeClass;
+        item.className = 'proun-item proun-item--' + tier;
         item.setAttribute('data-reveal', '');
-        item.style.setProperty('--rot', rot.toFixed(1) + 'deg');
-        item.style.setProperty('--y', yOff + 'px');
-        item.style.setProperty('--color', col);
+        item.dataset.baseRot = baseRot.toFixed(1);
 
-        // Darken language color for the hover border accent
-        // Use the color as-is — it works with the constructivist palette
+        item.style.setProperty('--rot', baseRot.toFixed(1) + 'deg');
+        item.style.setProperty('--y', yOff.toFixed(0) + 'px');
+        item.style.setProperty('--color', col);
+        item.style.setProperty('--depth', depthScale.toFixed(2));
 
         var desc = repo.description || '—';
-        var shortName = repo.name.length > 16 ? repo.name.slice(0, 14) + '…' : repo.name;
+        var shortName = repo.name.length > 18 ? repo.name.slice(0, 16) + '…' : repo.name;
 
         item.innerHTML =
           '<span class="proun-item__stripe" style="background:' + col + '"></span>' +
-          '<div class="proun-item__body">' +
-            '<div class="proun-item__top">' +
+          '<span class="proun-item__body">' +
+            '<span class="proun-item__top">' +
               '<span class="proun-item__name">' + escapeHtml(shortName) + '</span>' +
               '<span class="proun-item__stars">★ ' + repo.stargazers_count + '</span>' +
-            '</div>' +
+            '</span>' +
             (repo.language ? '<span class="proun-item__lang"><span class="proun-item__dot" style="background:' + col + '"></span>' + repo.language + '</span>' : '') +
-          '</div>' +
-          '<div class="proun-item__hover">' +
-            '<p class="proun-item__desc">' + escapeHtml(desc) + '</p>' +
-            '<div class="proun-item__foot">' +
+          '</span>' +
+          '<span class="proun-item__hover">' +
+            '<span class="proun-item__desc">' + escapeHtml(desc) + '</span>' +
+            '<span class="proun-item__foot">' +
               (repo.forks_count > 0 ? '<span class="proun-item__fork">⑂ ' + repo.forks_count + '</span>' : '') +
               '<span class="proun-item__update">' + formatDate(repo.updated_at) + '</span>' +
               '<span class="proun-item__arrow">→</span>' +
-            '</div>' +
-          '</div>' +
+            '</span>' +
+          '</span>' +
           '<span class="crop-mark crop-mark--tl"></span>' +
           '<span class="crop-mark crop-mark--br"></span>';
 
         grid.appendChild(item);
       });
 
-      // ——— Floating Red Stars (decorative, Option 4 blend) ———
-      for (var s = 0; s < 7; s++) {
-        (function() {
-          var star = document.createElement('span');
-          star.className = 'proun-star';
-          star.textContent = '★';
-          star.style.left = (5 + Math.random() * 88) + '%';
-          star.style.top = (4 + Math.random() * 88) + '%';
-          star.style.fontSize = (10 + Math.random() * 22) + 'px';
-          star.style.animationDelay = (Math.random() * 4).toFixed(2) + 's';
-          star.style.animationDuration = (3 + Math.random() * 2).toFixed(1) + 's';
-          star.style.opacity = '0.08';
-          scene.appendChild(star);
-        })();
+      // ——— Red Stars: scatter 10 decorative ★ across the stage ———
+      for (var s = 0; s < 10; s++) {
+        var star = document.createElement('span');
+        star.className = 'proun-star';
+        star.textContent = '★';
+        star.style.left = (2 + Math.random() * 96) + '%';
+        star.style.top = (2 + Math.random() * 93) + '%';
+        star.style.fontSize = (8 + Math.random() * 18) + 'px';
+        star.style.animationDelay = (Math.random() * 5).toFixed(2) + 's';
+        star.style.animationDuration = (3.5 + Math.random() * 2.5).toFixed(1) + 's';
+        stage.appendChild(star);
       }
 
-      // Trigger reveal
+      // ——— Scroll-driven Z-rotation (Proun tumble) ———
+      var items = Array.from(grid.querySelectorAll('.proun-item'));
+
+      function updateScrollTumble() {
+        var vh = window.innerHeight;
+        for (var i = 0; i < items.length; i++) {
+          var el = items[i];
+          var rect = el.getBoundingClientRect();
+          var center = rect.top + rect.height / 2;
+          var norm = Math.max(-1, Math.min(1, ((center / vh) - 0.5) * 2));
+          var scrollRot = norm * 2.8;
+          el.style.setProperty('--scroll-rot', scrollRot.toFixed(1) + 'deg');
+        }
+      }
+
+      var ticking = false;
+      window.addEventListener('scroll', function() {
+        if (!ticking) {
+          requestAnimationFrame(function() {
+            updateScrollTumble();
+            ticking = false;
+          });
+          ticking = true;
+        }
+      }, { passive: true });
+
+      // ——— Reveal ———
       requestAnimationFrame(function() {
         var observer = new IntersectionObserver(function(entries) {
           entries.forEach(function(entry) {
@@ -139,10 +169,8 @@
               observer.unobserve(entry.target);
             }
           });
-        }, { threshold: 0.06, rootMargin: '0px 0px -40px 0px' });
-        grid.querySelectorAll('.proun-item').forEach(function(el) {
-          observer.observe(el);
-        });
+        }, { threshold: 0.04, rootMargin: '0px 0px -40px 0px' });
+        items.forEach(function(el) { observer.observe(el); });
       });
 
     } catch (err) {
@@ -183,43 +211,47 @@
     margin-top: -1.8rem;
   }
 
-  /* ——— Proun Scene ——— */
-  .proun-scene {
+  /* =============================================
+     Proun Stage — Axonometric floating space
+     ============================================= */
+  .proun-stage {
     position: relative;
-    max-width: 1160px;
+    max-width: 1200px;
     margin: 0 auto;
-    padding: 0 6vw 60px;
-    min-height: 320px;
+    padding: 24px 6vw 50px;
+    min-height: 400px;
+    overflow: hidden;
   }
 
-  /* Isometric grid background */
+  /* Isometric grid — ±28° axonometric lines */
   .proun-grid-bg {
     position: absolute;
-    inset: 0;
+    inset: -80px 0;
     pointer-events: none;
-    opacity: 0.35;
+    opacity: 0.30;
     background-image:
       repeating-linear-gradient(
         28deg,
         transparent 0px,
-        transparent 41px,
-        rgba(196, 164, 74, 0.10) 42px
+        transparent 43px,
+        rgba(196, 164, 74, 0.10) 44px
       ),
       repeating-linear-gradient(
         -28deg,
         transparent 0px,
-        transparent 41px,
-        rgba(196, 164, 74, 0.10) 42px
+        transparent 43px,
+        rgba(196, 164, 74, 0.10) 44px
       );
   }
 
-  /* ——— Proun Grid (4-col bento) ——— */
-  .proun-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 18px;
+  /* ——— Flex-based flowing layout ——— */
+  .proun-flow {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
     position: relative;
     z-index: 1;
+    align-items: stretch;
   }
 
   /* ——— Proun Item ——— */
@@ -232,89 +264,67 @@
     text-decoration: none;
     color: inherit;
     cursor: pointer;
-    transition:
-      transform 0.4s cubic-bezier(0.16, 1, 0.3, 1),
-      box-shadow 0.4s cubic-bezier(0.16, 1, 0.3, 1),
-      border-color 0.3s ease;
-    transform: rotate(var(--rot, 0deg)) translateY(var(--y, 0px));
+    transform:
+      rotate(calc(var(--rot, 0deg) + var(--scroll-rot, 0deg)))
+      translateY(var(--y, 0px))
+      scale(var(--depth, 1));
     opacity: 0;
-    transform-style: preserve-3d;
     will-change: transform;
+    transition:
+      transform 0.45s cubic-bezier(0.16, 1, 0.3, 1),
+      box-shadow 0.35s ease,
+      border-color 0.3s ease;
   }
 
-  .proun-item.revealed {
-    opacity: 1;
-  }
+  .proun-item.revealed { opacity: 1; }
 
-  .proun-item--xl {
-    grid-column: span 2;
-    grid-row: span 2;
-    min-height: 240px;
-  }
+  /* Size tiers */
+  .proun-item--xl { width: calc(50% - 7px); min-height: 170px; }
+  .proun-item--lg { width: calc(50% - 7px); min-height: 115px; }
+  .proun-item--md { width: calc(33.33% - 10px); min-height: 100px; }
+  .proun-item--sm { width: calc(25% - 11px); min-height: 90px; }
 
-  .proun-item--lg {
-    grid-column: span 2;
-    min-height: 130px;
-  }
-
-  .proun-item--md {
-    min-height: 110px;
-  }
-
-  .proun-item--sm {
-    min-height: 90px;
-  }
-
-  /* Language color stripe (left) */
+  /* Language color stripe */
   .proun-item__stripe {
     position: absolute;
     top: 0;
     left: 0;
-    width: 5px;
+    width: 4px;
     height: 100%;
     transition: width 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   }
 
-  /* ——— Body ——— */
+  /* Body */
   .proun-item__body {
     flex: 1;
     display: flex;
     flex-direction: column;
-    padding: 16px 18px 12px 22px;
+    padding: 12px 14px 8px 18px;
   }
-
-  .proun-item--xl .proun-item__body {
-    padding: 24px 26px 18px 30px;
-  }
+  .proun-item--xl .proun-item__body { padding: 20px 20px 12px 26px; }
+  .proun-item--lg .proun-item__body { padding: 14px 16px 10px 22px; }
 
   .proun-item__top {
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
-    gap: 10px;
+    gap: 8px;
   }
 
   .proun-item__name {
     font-family: var(--font-display);
-    font-size: clamp(0.85rem, 1.1vw, 1rem);
+    font-size: clamp(0.78rem, 0.95vw, 0.92rem);
     letter-spacing: 0.04em;
     text-transform: uppercase;
     color: var(--black);
     word-break: break-word;
     line-height: 1.2;
   }
-
-  .proun-item--xl .proun-item__name {
-    font-size: clamp(1.1rem, 1.6vw, 1.35rem);
-  }
-
-  .proun-item--xl .proun-item__top {
-    margin-bottom: 8px;
-  }
+  .proun-item--xl .proun-item__name { font-size: clamp(1rem, 1.4vw, 1.25rem); }
 
   .proun-item__stars {
     font-family: var(--font-body);
-    font-size: 0.78rem;
+    font-size: 0.72rem;
     font-weight: 600;
     color: var(--gold-dark);
     white-space: nowrap;
@@ -325,49 +335,54 @@
   .proun-item__lang {
     display: inline-flex;
     align-items: center;
-    gap: 5px;
+    gap: 4px;
     font-family: var(--font-body);
-    font-size: 0.72rem;
+    font-size: 0.68rem;
     font-weight: 500;
     color: var(--black);
-    opacity: 0.5;
+    opacity: 0.4;
     margin-top: auto;
-    padding-top: 6px;
+    padding-top: 4px;
   }
+  .proun-item--xl .proun-item__lang { font-size: 0.72rem; }
 
   .proun-item__dot {
     display: inline-block;
-    width: 7px;
-    height: 7px;
+    width: 6px;
+    height: 6px;
     border-radius: 50%;
     flex-shrink: 0;
   }
 
-  /* ——— Hover reveal panel ——— */
+  /* =============================================
+     Hover overlay — gradient fade-in at bottom
+     NO translate to avoid overflow spill
+     ============================================= */
   .proun-item__hover {
     position: absolute;
     bottom: 0;
     left: 0;
     right: 0;
-    background: var(--white-off);
-    border-top: 2px solid var(--color, var(--gold));
-    padding: 10px 18px 12px 22px;
-    transform: translateY(100%);
-    transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
-    z-index: 5;
+    padding: 22px 14px 8px 18px;
+    background: linear-gradient(to top,
+      var(--white-warm) 0%,
+      var(--white-warm) 55%,
+      transparent 100%);
+    opacity: 0;
+    transition: opacity 0.35s ease;
+    pointer-events: none;
+    z-index: 2;
   }
-
-  .proun-item--xl .proun-item__hover {
-    padding: 14px 26px 16px 30px;
-  }
+  .proun-item--xl .proun-item__hover { padding: 30px 20px 12px 26px; }
+  .proun-item--lg .proun-item__hover { padding: 26px 16px 10px 22px; }
 
   .proun-item__desc {
     font-family: var(--font-body);
-    font-size: clamp(0.75rem, 0.9vw, 0.82rem);
+    font-size: clamp(0.7rem, 0.85vw, 0.78rem);
     color: var(--black);
-    opacity: 0.75;
-    margin: 0 0 8px;
-    line-height: 1.55;
+    opacity: 0.8;
+    margin: 0 0 5px;
+    line-height: 1.5;
     display: -webkit-box;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
@@ -377,44 +392,38 @@
   .proun-item__foot {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 10px;
     font-family: var(--font-body);
-    font-size: 0.68rem;
+    font-size: 0.62rem;
     color: var(--black);
-    opacity: 0.45;
+    opacity: 0.5;
   }
 
-  .proun-item__fork {
-    display: inline-flex;
-    align-items: center;
-    gap: 2px;
-  }
-
-  .proun-item__update {
-    margin-right: auto;
-  }
+  .proun-item__update { margin-right: auto; }
 
   .proun-item__arrow {
-    font-size: 1rem;
+    font-size: 0.85rem;
     color: var(--red);
     opacity: 0.6;
     transition: transform 0.25s ease, opacity 0.25s ease;
   }
 
-  /* ——— Hover states ——— */
-  .proun-item:hover {
-    transform: rotate(0deg) translateY(-6px);
-    box-shadow: -8px 8px 0 var(--color, var(--gold));
+  /* ——— Hover: fly to foreground ——— */
+  .proun-item:hover,
+  .proun-item:focus {
+    transform: rotate(0deg) translateY(-10px) scale(1.04);
+    box-shadow: -12px 12px 0 var(--color, var(--gold));
     border-color: var(--color, var(--gold));
-    z-index: 10;
+    z-index: 100;
+  }
+
+  .proun-item:hover .proun-item__hover,
+  .proun-item:focus .proun-item__hover {
+    opacity: 1;
   }
 
   .proun-item:hover .proun-item__stripe {
-    width: 7px;
-  }
-
-  .proun-item:hover .proun-item__hover {
-    transform: translateY(0);
+    width: 6px;
   }
 
   .proun-item:hover .proun-item__arrow {
@@ -422,32 +431,46 @@
     opacity: 1;
   }
 
-  /* ——— Decorative Stars (Option 4 blend) ——— */
+  /* =============================================
+     Red Stars — visible floating ★
+     ============================================= */
   .proun-star {
     position: absolute;
     color: var(--red);
     pointer-events: none;
     user-select: none;
     line-height: 1;
-    animation: proun-star-float 3.5s ease-in-out infinite;
+    animation: proun-star-drift 4s ease-in-out infinite;
     will-change: transform, opacity;
+    text-shadow: 0 0 8px rgba(204, 0, 0, 0.35), 0 0 2px rgba(204, 0, 0, 0.15);
+    z-index: 0;
   }
 
-  @keyframes proun-star-float {
-    0%, 100% { opacity: 0.08; transform: translateY(0) rotate(0deg) scale(1); }
-    25% { opacity: 0.22; }
-    50% { opacity: 0.12; transform: translateY(-12px) rotate(12deg) scale(1.08); }
-    75% { opacity: 0.20; }
+  @keyframes proun-star-drift {
+    0%, 100% {
+      opacity: 0.10;
+      transform: translateY(0) rotate(0deg) scale(1);
+    }
+    35% {
+      opacity: 0.30;
+      transform: translateY(-10px) rotate(8deg) scale(1.15);
+    }
+    65% {
+      opacity: 0.22;
+      transform: translateY(-5px) rotate(4deg) scale(1.05);
+    }
   }
 
-  /* ——— Loading ——— */
+  /* =============================================
+     Loading dots
+     ============================================= */
   .opensource__loading {
-    grid-column: 1 / -1;
+    width: 100%;
     display: flex;
     justify-content: center;
     align-items: center;
     gap: 8px;
-    padding: 56px 0;
+    padding: 60px 0;
     font-family: var(--font-body);
     font-size: 1rem;
     letter-spacing: 0.3em;
@@ -458,84 +481,43 @@
   .opensource__loading-dot {
     animation: proun-dot-pulse 1.4s ease-in-out infinite;
   }
-
-  .opensource__loading-dot:nth-child(2) {
-    animation-delay: 0.2s;
-  }
-
-  .opensource__loading-dot:nth-child(3) {
-    animation-delay: 0.4s;
-  }
+  .opensource__loading-dot:nth-child(2) { animation-delay: 0.2s; }
+  .opensource__loading-dot:nth-child(3) { animation-delay: 0.4s; }
 
   @keyframes proun-dot-pulse {
     0%, 80%, 100% { opacity: 0.2; transform: scale(0.8); }
     40% { opacity: 0.8; transform: scale(1.1); }
   }
 
-  /* ——— Responsive ——— */
-  @media (max-width: 768px) {
-    .proun-grid {
-      grid-template-columns: repeat(2, 1fr);
-      gap: 12px;
-    }
-
-    .proun-item--xl {
-      grid-column: span 2;
-      grid-row: span 1;
-      min-height: 100px;
-    }
-
-    .proun-item--lg {
-      grid-column: span 2;
-      min-height: 90px;
-    }
-
-    .proun-item--md,
-    .proun-item--sm {
-      min-height: 85px;
-    }
-
-    .proun-item__body {
-      padding: 12px 14px 10px 16px;
-    }
-
-    .proun-item--xl .proun-item__body {
-      padding: 16px 18px 12px 20px;
-    }
-
-    .proun-item__name {
-      font-size: 0.78rem;
-    }
-
-    .proun-item--xl .proun-item__name {
-      font-size: 0.95rem;
-    }
-
-    .proun-item__hover {
-      display: none;
-    }
-
-    .proun-grid-bg {
-      opacity: 0.18;
-    }
-
-    .proun-star {
-      display: none;
-    }
+  /* =============================================
+     Responsive
+     ============================================= */
+  @media (max-width: 900px) {
+    .proun-item--xl,
+    .proun-item--lg,
+    .proun-item--md { width: calc(50% - 7px); }
+    .proun-item--sm { width: calc(33.33% - 10px); }
+    .proun-item__hover { display: none; }
+    .proun-star { opacity: 0.15 !important; animation: none !important; }
   }
 
-  @media (max-width: 480px) {
-    .proun-grid {
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
-    }
-
+  @media (max-width: 600px) {
+    .proun-stage { padding: 12px 4vw 30px; }
+    .proun-flow { gap: 10px; }
     .proun-item--xl,
     .proun-item--lg,
     .proun-item--md,
     .proun-item--sm {
-      grid-column: span 1;
-      min-height: 80px;
+      width: calc(50% - 5px);
+      min-height: 70px;
     }
+    .proun-item__body { padding: 10px 10px 6px 14px; }
+    .proun-item--xl .proun-item__body { padding: 14px 14px 8px 18px; }
+    .proun-item__name { font-size: 0.7rem; }
+    .proun-item--xl .proun-item__name { font-size: 0.85rem; }
+    .proun-item__stars { font-size: 0.65rem; }
+    .proun-item__lang { display: none; }
+    .proun-grid-bg { opacity: 0.12; }
+    .proun-star { display: none; }
   }
 </style>
