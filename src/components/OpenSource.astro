@@ -6,12 +6,17 @@
 
   <div class="proun-stage" id="proun-stage">
     <div class="proun-grid-bg" aria-hidden="true"></div>
-    <div class="proun-flow" id="gh-repos">
-      <div class="opensource__loading" id="gh-loading">
-        <span class="opensource__loading-dot">●</span>
-        <span class="opensource__loading-dot">●</span>
-        <span class="opensource__loading-dot">●</span>
+
+    <div class="proun-scene" id="proun-scene">
+      <div class="proun-cylinder" id="proun-cylinder">
+        <div class="opensource__loading" id="gh-loading">
+          <span class="opensource__loading-dot">●</span>
+          <span class="opensource__loading-dot">●</span>
+          <span class="opensource__loading-dot">●</span>
+        </div>
       </div>
+      <div class="proun-fade" aria-hidden="true"></div>
+      <div class="proun-spotlight" aria-hidden="true"></div>
     </div>
   </div>
 </section>
@@ -19,9 +24,9 @@
 <script>
 (function() {
   var EXCLUDED = ['guide-vehicle', 'lsqkk.github.io', 'image', 'lsqkk', 'gallery'];
-  var grid = document.getElementById('gh-repos');
+  var cylinder = document.getElementById('proun-cylinder');
   var loading = document.getElementById('gh-loading');
-  var stage = document.getElementById('proun-stage');
+  var scene = document.getElementById('proun-scene');
 
   var LANG_COLORS = {
     'JavaScript': '#f1e05a',
@@ -59,118 +64,126 @@
       }
 
       loading.style.display = 'none';
-      var total = filtered.length;
+
+      var count = filtered.length;
+      var angleStep = 360 / count;
 
       filtered.forEach(function(repo, i) {
+        var angle = i * angleStep;
         var col = langColor(repo.language);
-
-        // Size tiers: larger = more stars
-        var tier;
-        if (i < 2) tier = 'xl';
-        else if (i < 7) tier = 'lg';
-        else if (i < 15) tier = 'md';
-        else tier = 'sm';
-
-        // Base rotation (smaller items tilt more)
-        var baseRot = (Math.random() - 0.5) * (tier === 'xl' ? 1.5 : tier === 'lg' ? 3 : tier === 'md' ? 5 : 7);
-
-        // Y offset for staggered feel
-        var yOff = (Math.random() - 0.5) * 16;
-
-        // Subtle depth scale (some closer, some farther)
-        var depthScale = 1;
-        if (i % 4 === 0) depthScale = 1.05;
-        else if (i % 4 === 2) depthScale = 0.95;
 
         var item = document.createElement('a');
         item.href = repo.html_url;
         item.target = '_blank';
         item.rel = 'noopener noreferrer';
-        item.className = 'proun-item proun-item--' + tier;
-        item.setAttribute('data-reveal', '');
-        item.dataset.baseRot = baseRot.toFixed(1);
+        item.className = 'proun-item';
+        item.style.setProperty('--a', angle.toFixed(1) + 'deg');
+        item.style.setProperty('--col', col);
 
-        item.style.setProperty('--rot', baseRot.toFixed(1) + 'deg');
-        item.style.setProperty('--y', yOff.toFixed(0) + 'px');
-        item.style.setProperty('--color', col);
-        item.style.setProperty('--depth', depthScale.toFixed(2));
-
+        var shortName = repo.name.length > 16 ? repo.name.slice(0, 14) + '…' : repo.name;
         var desc = repo.description || '—';
-        var shortName = repo.name.length > 18 ? repo.name.slice(0, 16) + '…' : repo.name;
 
         item.innerHTML =
           '<span class="proun-item__stripe" style="background:' + col + '"></span>' +
-          '<span class="proun-item__body">' +
+          '<span class="proun-item__inner">' +
             '<span class="proun-item__top">' +
               '<span class="proun-item__name">' + escapeHtml(shortName) + '</span>' +
               '<span class="proun-item__stars">★ ' + repo.stargazers_count + '</span>' +
             '</span>' +
             (repo.language ? '<span class="proun-item__lang"><span class="proun-item__dot" style="background:' + col + '"></span>' + repo.language + '</span>' : '') +
-          '</span>' +
-          '<span class="proun-item__hover">' +
-            '<span class="proun-item__desc">' + escapeHtml(desc) + '</span>' +
-            '<span class="proun-item__foot">' +
-              (repo.forks_count > 0 ? '<span class="proun-item__fork">⑂ ' + repo.forks_count + '</span>' : '') +
-              '<span class="proun-item__update">' + formatDate(repo.updated_at) + '</span>' +
-              '<span class="proun-item__arrow">→</span>' +
+            '<span class="proun-item__hover">' +
+              '<span class="proun-item__desc">' + escapeHtml(desc) + '</span>' +
+              '<span class="proun-item__foot">' +
+                (repo.forks_count > 0 ? '<span>⑂ ' + repo.forks_count + '</span>' : '') +
+                '<span>' + formatDate(repo.updated_at) + '</span>' +
+                '<span class="proun-item__arrow">→</span>' +
+              '</span>' +
             '</span>' +
           '</span>' +
           '<span class="crop-mark crop-mark--tl"></span>' +
           '<span class="crop-mark crop-mark--br"></span>';
 
-        grid.appendChild(item);
+        cylinder.appendChild(item);
       });
 
-      // ——— Red Stars: scatter 10 decorative ★ across the stage ———
-      for (var s = 0; s < 10; s++) {
+      // ——— Red Stars ———
+      for (var s = 0; s < 14; s++) {
         var star = document.createElement('span');
         star.className = 'proun-star';
         star.textContent = '★';
-        star.style.left = (2 + Math.random() * 96) + '%';
-        star.style.top = (2 + Math.random() * 93) + '%';
-        star.style.fontSize = (8 + Math.random() * 18) + 'px';
-        star.style.animationDelay = (Math.random() * 5).toFixed(2) + 's';
-        star.style.animationDuration = (3.5 + Math.random() * 2.5).toFixed(1) + 's';
-        stage.appendChild(star);
+        star.style.left = (1 + Math.random() * 98) + '%';
+        star.style.top = (2 + Math.random() * 95) + '%';
+        star.style.fontSize = (5 + Math.random() * 18) + 'px';
+        star.style.animationDelay = (Math.random() * 7).toFixed(2) + 's';
+        star.style.animationDuration = (3 + Math.random() * 4).toFixed(1) + 's';
+        star.style.opacity = '0.06';
+        scene.appendChild(star);
       }
 
-      // ——— Scroll-driven Z-rotation (Proun tumble) ———
-      var items = Array.from(grid.querySelectorAll('.proun-item'));
+      // ——— 3D Cylinder Auto-Rotation ———
+      var rotation = 0;
+      var isPaused = false;
+      var isDragging = false;
+      var dragStartX = 0;
+      var dragStartRot = 0;
+      var SPEED = 0.12; // deg/frame ≈ 1 rotation / 50s
 
-      function updateScrollTumble() {
-        var vh = window.innerHeight;
-        for (var i = 0; i < items.length; i++) {
-          var el = items[i];
-          var rect = el.getBoundingClientRect();
-          var center = rect.top + rect.height / 2;
-          var norm = Math.max(-1, Math.min(1, ((center / vh) - 0.5) * 2));
-          var scrollRot = norm * 2.8;
-          el.style.setProperty('--scroll-rot', scrollRot.toFixed(1) + 'deg');
+      function tick() {
+        if (!isPaused && !isDragging) {
+          rotation = (rotation + SPEED) % 360;
         }
+        cylinder.style.setProperty('--rot', rotation.toFixed(2) + 'deg');
+        requestAnimationFrame(tick);
       }
 
-      var ticking = false;
-      window.addEventListener('scroll', function() {
-        if (!ticking) {
-          requestAnimationFrame(function() {
-            updateScrollTumble();
-            ticking = false;
-          });
-          ticking = true;
+      requestAnimationFrame(tick);
+
+      scene.addEventListener('mouseenter', function() { isPaused = true; });
+      scene.addEventListener('mouseleave', function() {
+        isPaused = false;
+        isDragging = false;
+      });
+
+      scene.addEventListener('mousedown', function(e) {
+        if (e.target.closest('a')) return;
+        isDragging = true;
+        isPaused = true;
+        dragStartX = e.clientX;
+        dragStartRot = rotation;
+      });
+
+      window.addEventListener('mousemove', function(e) {
+        if (!isDragging) return;
+        var dx = e.clientX - dragStartX;
+        rotation = ((dragStartRot + dx * 0.35) % 360 + 360) % 360;
+      });
+
+      window.addEventListener('mouseup', function() {
+        if (isDragging) {
+          isDragging = false;
+          isPaused = false;
         }
+      });
+
+      scene.addEventListener('touchstart', function(e) {
+        if (e.target.closest('a')) return;
+        isDragging = true;
+        isPaused = true;
+        dragStartX = e.touches[0].clientX;
+        dragStartRot = rotation;
       }, { passive: true });
 
-      // ——— Reveal ———
-      requestAnimationFrame(function() {
-        var observer = new IntersectionObserver(function(entries) {
-          entries.forEach(function(entry) {
-            if (entry.isIntersecting) {
-              entry.target.classList.add('revealed');
-              observer.unobserve(entry.target);
-            }
-          });
-        }, { threshold: 0.04, rootMargin: '0px 0px -40px 0px' });
-        items.forEach(function(el) { observer.observe(el); });
+      scene.addEventListener('touchmove', function(e) {
+        if (!isDragging) return;
+        var dx = e.touches[0].clientX - dragStartX;
+        rotation = ((dragStartRot + dx * 0.35) % 360 + 360) % 360;
+      }, { passive: true });
+
+      scene.addEventListener('touchend', function() {
+        if (isDragging) {
+          isDragging = false;
+          isPaused = false;
+        }
       });
 
     } catch (err) {
@@ -211,80 +224,94 @@
     margin-top: -1.8rem;
   }
 
-  /* =============================================
-     Proun Stage — Axonometric floating space
-     ============================================= */
+  /* ============================================
+     Proun Stage — 3D Cylinder Carousel
+     ============================================ */
   .proun-stage {
     position: relative;
     max-width: 1200px;
     margin: 0 auto;
-    padding: 24px 6vw 50px;
-    min-height: 400px;
+    padding: 0 4vw;
+    height: 500px;
     overflow: hidden;
   }
 
-  /* Isometric grid — ±28° axonometric lines */
   .proun-grid-bg {
     position: absolute;
-    inset: -80px 0;
+    inset: 0;
     pointer-events: none;
-    opacity: 0.30;
+    opacity: 0.22;
     background-image:
       repeating-linear-gradient(
         28deg,
         transparent 0px,
-        transparent 43px,
-        rgba(196, 164, 74, 0.10) 44px
+        transparent 39px,
+        rgba(196, 164, 74, 0.08) 40px
       ),
       repeating-linear-gradient(
         -28deg,
         transparent 0px,
-        transparent 43px,
-        rgba(196, 164, 74, 0.10) 44px
+        transparent 39px,
+        rgba(196, 164, 74, 0.08) 40px
       );
   }
 
-  /* ——— Flex-based flowing layout ——— */
-  .proun-flow {
+  /* ——— 3D Scene ——— */
+  .proun-scene {
+    position: absolute;
+    inset: 0;
+    perspective: 1300px;
+    perspective-origin: 50% 48%;
     display: flex;
-    flex-wrap: wrap;
-    gap: 14px;
-    position: relative;
-    z-index: 1;
-    align-items: stretch;
+    align-items: center;
+    justify-content: center;
+    cursor: grab;
+  }
+  .proun-scene:active { cursor: grabbing; }
+
+  /* Cylinder radius, overridable per breakpoint */
+  .proun-cylinder {
+    --R: 480px;
+    width: 0;
+    height: 0;
+    transform-style: preserve-3d;
+    transform: rotateY(var(--rot, 0deg));
   }
 
-  /* ——— Proun Item ——— */
+  /* ——— Card ——— */
   .proun-item {
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    border: 2px solid var(--black);
-    background: var(--white-warm);
+    position: absolute;
+    display: block;
+    width: 170px;
+    height: 132px;
+    margin-left: -85px;
+    margin-top: -66px;
+    backface-visibility: hidden;
+    transform: rotateY(var(--a, 0deg)) translateZ(var(--R));
     text-decoration: none;
     color: inherit;
     cursor: pointer;
-    transform:
-      rotate(calc(var(--rot, 0deg) + var(--scroll-rot, 0deg)))
-      translateY(var(--y, 0px))
-      scale(var(--depth, 1));
-    opacity: 0;
-    will-change: transform;
-    transition:
-      transform 0.45s cubic-bezier(0.16, 1, 0.3, 1),
-      box-shadow 0.35s ease,
-      border-color 0.3s ease;
+    border: 2px solid var(--black);
+    background: var(--white-warm);
+    box-shadow: -2px 2px 0 rgba(17, 17, 17, 0.06);
+    transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+                box-shadow 0.3s ease,
+                border-color 0.25s ease;
   }
 
-  .proun-item.revealed { opacity: 1; }
+  /* ——— Hover ——— */
+  .proun-item:hover {
+    transform: rotateY(var(--a, 0deg)) translateZ(var(--R)) scale(1.22);
+    box-shadow: -10px 10px 0 var(--col, var(--gold));
+    border-color: var(--col, var(--gold));
+    z-index: 999;
+  }
 
-  /* Size tiers */
-  .proun-item--xl { width: calc(50% - 7px); min-height: 170px; }
-  .proun-item--lg { width: calc(50% - 7px); min-height: 115px; }
-  .proun-item--md { width: calc(33.33% - 10px); min-height: 100px; }
-  .proun-item--sm { width: calc(25% - 11px); min-height: 90px; }
+  .proun-item:hover .proun-item__stripe { width: 6px; }
+  .proun-item:hover .proun-item__hover { opacity: 1; }
+  .proun-item:hover .proun-item__arrow { transform: translateX(4px); opacity: 1; }
 
-  /* Language color stripe */
+  /* ——— Card inner layout ——— */
   .proun-item__stripe {
     position: absolute;
     top: 0;
@@ -294,37 +321,34 @@
     transition: width 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   }
 
-  /* Body */
-  .proun-item__body {
-    flex: 1;
+  .proun-item__inner {
     display: flex;
     flex-direction: column;
-    padding: 12px 14px 8px 18px;
+    height: 100%;
+    padding: 14px 12px 8px 16px;
+    position: relative;
   }
-  .proun-item--xl .proun-item__body { padding: 20px 20px 12px 26px; }
-  .proun-item--lg .proun-item__body { padding: 14px 16px 10px 22px; }
 
   .proun-item__top {
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
-    gap: 8px;
+    gap: 6px;
   }
 
   .proun-item__name {
     font-family: var(--font-display);
-    font-size: clamp(0.78rem, 0.95vw, 0.92rem);
+    font-size: 0.82rem;
     letter-spacing: 0.04em;
     text-transform: uppercase;
     color: var(--black);
     word-break: break-word;
     line-height: 1.2;
   }
-  .proun-item--xl .proun-item__name { font-size: clamp(1rem, 1.4vw, 1.25rem); }
 
   .proun-item__stars {
     font-family: var(--font-body);
-    font-size: 0.72rem;
+    font-size: 0.7rem;
     font-weight: 600;
     color: var(--gold-dark);
     white-space: nowrap;
@@ -337,14 +361,13 @@
     align-items: center;
     gap: 4px;
     font-family: var(--font-body);
-    font-size: 0.68rem;
+    font-size: 0.65rem;
     font-weight: 500;
     color: var(--black);
     opacity: 0.4;
     margin-top: auto;
     padding-top: 4px;
   }
-  .proun-item--xl .proun-item__lang { font-size: 0.72rem; }
 
   .proun-item__dot {
     display: inline-block;
@@ -354,35 +377,29 @@
     flex-shrink: 0;
   }
 
-  /* =============================================
-     Hover overlay — gradient fade-in at bottom
-     NO translate to avoid overflow spill
-     ============================================= */
+  /* ——— Hover description overlay ——— */
   .proun-item__hover {
     position: absolute;
     bottom: 0;
     left: 0;
     right: 0;
-    padding: 22px 14px 8px 18px;
+    padding: 18px 12px 8px 16px;
     background: linear-gradient(to top,
       var(--white-warm) 0%,
       var(--white-warm) 55%,
       transparent 100%);
     opacity: 0;
-    transition: opacity 0.35s ease;
+    transition: opacity 0.3s ease;
     pointer-events: none;
-    z-index: 2;
   }
-  .proun-item--xl .proun-item__hover { padding: 30px 20px 12px 26px; }
-  .proun-item--lg .proun-item__hover { padding: 26px 16px 10px 22px; }
 
   .proun-item__desc {
     font-family: var(--font-body);
-    font-size: clamp(0.7rem, 0.85vw, 0.78rem);
+    font-size: 0.68rem;
     color: var(--black);
     opacity: 0.8;
-    margin: 0 0 5px;
-    line-height: 1.5;
+    margin: 0 0 4px;
+    line-height: 1.45;
     display: -webkit-box;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
@@ -392,48 +409,52 @@
   .proun-item__foot {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 8px;
     font-family: var(--font-body);
-    font-size: 0.62rem;
+    font-size: 0.58rem;
     color: var(--black);
     opacity: 0.5;
   }
 
-  .proun-item__update { margin-right: auto; }
-
   .proun-item__arrow {
-    font-size: 0.85rem;
+    margin-left: auto;
+    font-size: 0.8rem;
     color: var(--red);
     opacity: 0.6;
     transition: transform 0.25s ease, opacity 0.25s ease;
   }
 
-  /* ——— Hover: fly to foreground ——— */
-  .proun-item:hover,
-  .proun-item:focus {
-    transform: rotate(0deg) translateY(-10px) scale(1.04);
-    box-shadow: -12px 12px 0 var(--color, var(--gold));
-    border-color: var(--color, var(--gold));
-    z-index: 100;
+  /* ——— Edge fade vignette ——— */
+  .proun-fade {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: linear-gradient(
+      to right,
+      var(--white-off) 0%,
+      transparent 14%,
+      transparent 86%,
+      var(--white-off) 100%
+    );
+    z-index: 2;
   }
 
-  .proun-item:hover .proun-item__hover,
-  .proun-item:focus .proun-item__hover {
-    opacity: 1;
+  /* ——— Center spotlight ——— */
+  .proun-spotlight {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 400px;
+    height: 400px;
+    margin: -200px 0 0 -200px;
+    pointer-events: none;
+    background: radial-gradient(ellipse, rgba(196, 164, 74, 0.05) 0%, transparent 70%);
+    z-index: 0;
   }
 
-  .proun-item:hover .proun-item__stripe {
-    width: 6px;
-  }
-
-  .proun-item:hover .proun-item__arrow {
-    transform: translateX(5px);
-    opacity: 1;
-  }
-
-  /* =============================================
-     Red Stars — visible floating ★
-     ============================================= */
+  /* ============================================
+     Red Stars
+     ============================================ */
   .proun-star {
     position: absolute;
     color: var(--red);
@@ -442,82 +463,74 @@
     line-height: 1;
     animation: proun-star-drift 4s ease-in-out infinite;
     will-change: transform, opacity;
-    text-shadow: 0 0 8px rgba(204, 0, 0, 0.35), 0 0 2px rgba(204, 0, 0, 0.15);
-    z-index: 0;
+    text-shadow: 0 0 10px rgba(204, 0, 0, 0.35), 0 0 2px rgba(204, 0, 0, 0.15);
+    z-index: 3;
   }
 
   @keyframes proun-star-drift {
-    0%, 100% {
-      opacity: 0.10;
-      transform: translateY(0) rotate(0deg) scale(1);
-    }
-    35% {
-      opacity: 0.30;
-      transform: translateY(-10px) rotate(8deg) scale(1.15);
-    }
-    65% {
-      opacity: 0.22;
-      transform: translateY(-5px) rotate(4deg) scale(1.05);
-    }
+    0%, 100% { opacity: 0.06; transform: translateY(0) scale(1); }
+    35% { opacity: 0.22; transform: translateY(-8px) scale(1.15); }
+    65% { opacity: 0.15; transform: translateY(-4px) scale(1.05); }
   }
 
-  /* =============================================
-     Loading dots
-     ============================================= */
+  /* ============================================
+     Loading
+     ============================================ */
   .opensource__loading {
-    width: 100%;
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
     display: flex;
-    justify-content: center;
-    align-items: center;
     gap: 8px;
-    padding: 60px 0;
     font-family: var(--font-body);
     font-size: 1rem;
     letter-spacing: 0.3em;
     color: var(--black);
-    opacity: 0.3;
+    opacity: 0.25;
   }
 
   .opensource__loading-dot {
-    animation: proun-dot-pulse 1.4s ease-in-out infinite;
+    animation: dot-pulse 1.4s ease-in-out infinite;
   }
   .opensource__loading-dot:nth-child(2) { animation-delay: 0.2s; }
   .opensource__loading-dot:nth-child(3) { animation-delay: 0.4s; }
 
-  @keyframes proun-dot-pulse {
+  @keyframes dot-pulse {
     0%, 80%, 100% { opacity: 0.2; transform: scale(0.8); }
     40% { opacity: 0.8; transform: scale(1.1); }
   }
 
-  /* =============================================
+  /* ============================================
      Responsive
-     ============================================= */
-  @media (max-width: 900px) {
-    .proun-item--xl,
-    .proun-item--lg,
-    .proun-item--md { width: calc(50% - 7px); }
-    .proun-item--sm { width: calc(33.33% - 10px); }
+     ============================================ */
+  @media (max-width: 860px) {
+    .proun-stage { height: 380px; }
+    .proun-scene { perspective: 1000px; }
+    .proun-cylinder { --R: 360px; }
+    .proun-item { width: 140px; height: 108px; margin-left: -70px; margin-top: -54px; }
+    .proun-item__inner { padding: 10px 10px 6px 14px; }
+    .proun-item__name { font-size: 0.7rem; }
+    .proun-item__stars { font-size: 0.6rem; }
+    .proun-item__lang { font-size: 0.55rem; }
     .proun-item__hover { display: none; }
-    .proun-star { opacity: 0.15 !important; animation: none !important; }
+    .proun-star { display: none; }
+    .proun-grid-bg { opacity: 0.12; }
   }
 
-  @media (max-width: 600px) {
-    .proun-stage { padding: 12px 4vw 30px; }
-    .proun-flow { gap: 10px; }
-    .proun-item--xl,
-    .proun-item--lg,
-    .proun-item--md,
-    .proun-item--sm {
-      width: calc(50% - 5px);
-      min-height: 70px;
-    }
-    .proun-item__body { padding: 10px 10px 6px 14px; }
-    .proun-item--xl .proun-item__body { padding: 14px 14px 8px 18px; }
-    .proun-item__name { font-size: 0.7rem; }
-    .proun-item--xl .proun-item__name { font-size: 0.85rem; }
-    .proun-item__stars { font-size: 0.65rem; }
+  @media (max-width: 540px) {
+    .proun-stage { height: 280px; }
+    .proun-scene { perspective: 700px; }
+    .proun-cylinder { --R: 240px; }
+    .proun-item { width: 100px; height: 78px; margin-left: -50px; margin-top: -39px; border-width: 1.5px; }
+    .proun-item__inner { padding: 7px 7px 4px 10px; }
+    .proun-item__name { font-size: 0.55rem; }
+    .proun-item__stars { font-size: 0.48rem; }
     .proun-item__lang { display: none; }
-    .proun-grid-bg { opacity: 0.12; }
-    .proun-star { display: none; }
+    .proun-item__stripe { width: 3px; }
+    .proun-item:hover { transform: rotateY(var(--a)) translateZ(var(--R)) scale(1.15); box-shadow: -4px 4px 0 var(--col, var(--gold)); }
+    .proun-item .crop-mark { width: 12px; height: 12px; border-width: 2px; }
+    .proun-spotlight { width: 200px; height: 200px; margin: -100px 0 0 -100px; }
+    .proun-fade { background: linear-gradient(to right, var(--white-off) 0%, transparent 10%, transparent 90%, var(--white-off) 100%); }
   }
 </style>
