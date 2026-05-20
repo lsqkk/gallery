@@ -15,8 +15,6 @@
           <span class="opensource__loading-dot">●</span>
         </div>
       </div>
-      <div class="proun-fade" aria-hidden="true"></div>
-      <div class="proun-spotlight" aria-hidden="true"></div>
     </div>
   </div>
 </section>
@@ -68,9 +66,27 @@
       var count = filtered.length;
       var angleStep = 360 / count;
 
+      // Assign vertical levels: top (-1), center (0), bottom (+1)
+      // No two adjacent cards share the same level
+      var Y_BASES = [-58, 0, 58];
+      var levelIdx = [];
+      for (var i = 0; i < count; i++) {
+        var pool = [0, 1, 2];
+        if (i > 0) {
+          pool = pool.filter(function(l) { return l !== levelIdx[i - 1]; });
+        }
+        levelIdx.push(pool[Math.floor(Math.random() * pool.length)]);
+      }
+      // Also ensure last and first differ if it's a wrap
+      if (count > 1 && levelIdx[count - 1] === levelIdx[0]) {
+        var alt = [0, 1, 2].filter(function(l) { return l !== levelIdx[0]; });
+        levelIdx[count - 1] = alt[Math.floor(Math.random() * alt.length)];
+      }
+
       filtered.forEach(function(repo, i) {
-        var angle = i * angleStep;
+        var angle = i * angleStep + angleStep * 0.25;
         var col = langColor(repo.language);
+        var yPos = Y_BASES[levelIdx[i]] + (Math.random() - 0.5) * 16;
 
         var item = document.createElement('a');
         item.href = repo.html_url;
@@ -78,6 +94,7 @@
         item.rel = 'noopener noreferrer';
         item.className = 'proun-item';
         item.style.setProperty('--a', angle.toFixed(1) + 'deg');
+        item.style.setProperty('--y', yPos.toFixed(0) + 'px');
         item.style.setProperty('--col', col);
 
         var shortName = repo.name.length > 16 ? repo.name.slice(0, 14) + '…' : repo.name;
@@ -103,30 +120,33 @@
           '<span class="crop-mark crop-mark--tl"></span>' +
           '<span class="crop-mark crop-mark--br"></span>';
 
+        // Pause rotation only on direct card hover
+        item.addEventListener('mouseenter', function() { isPaused = true; });
+        item.addEventListener('mouseleave', function() { isPaused = false; });
+
         cylinder.appendChild(item);
       });
 
       // ——— Red Stars ———
-      for (var s = 0; s < 14; s++) {
+      for (var s = 0; s < 16; s++) {
         var star = document.createElement('span');
         star.className = 'proun-star';
         star.textContent = '★';
         star.style.left = (1 + Math.random() * 98) + '%';
-        star.style.top = (2 + Math.random() * 95) + '%';
+        star.style.top = (3 + Math.random() * 94) + '%';
         star.style.fontSize = (5 + Math.random() * 18) + 'px';
         star.style.animationDelay = (Math.random() * 7).toFixed(2) + 's';
         star.style.animationDuration = (3 + Math.random() * 4).toFixed(1) + 's';
-        star.style.opacity = '0.06';
         scene.appendChild(star);
       }
 
-      // ——— 3D Cylinder Auto-Rotation ———
+      // ——— 3D Auto-Rotation ———
       var rotation = 0;
       var isPaused = false;
       var isDragging = false;
       var dragStartX = 0;
       var dragStartRot = 0;
-      var SPEED = 0.12; // deg/frame ≈ 1 rotation / 50s
+      var SPEED = 0.10;
 
       function tick() {
         if (!isPaused && !isDragging) {
@@ -138,12 +158,7 @@
 
       requestAnimationFrame(tick);
 
-      scene.addEventListener('mouseenter', function() { isPaused = true; });
-      scene.addEventListener('mouseleave', function() {
-        isPaused = false;
-        isDragging = false;
-      });
-
+      // Drag background to spin (doesn't fire on cards due to closest('a') guard)
       scene.addEventListener('mousedown', function(e) {
         if (e.target.closest('a')) return;
         isDragging = true;
@@ -155,7 +170,7 @@
       window.addEventListener('mousemove', function(e) {
         if (!isDragging) return;
         var dx = e.clientX - dragStartX;
-        rotation = ((dragStartRot + dx * 0.35) % 360 + 360) % 360;
+        rotation = ((dragStartRot + dx * 0.5) % 360 + 360) % 360;
       });
 
       window.addEventListener('mouseup', function() {
@@ -176,7 +191,7 @@
       scene.addEventListener('touchmove', function(e) {
         if (!isDragging) return;
         var dx = e.touches[0].clientX - dragStartX;
-        rotation = ((dragStartRot + dx * 0.35) % 360 + 360) % 360;
+        rotation = ((dragStartRot + dx * 0.5) % 360 + 360) % 360;
       }, { passive: true });
 
       scene.addEventListener('touchend', function() {
@@ -225,34 +240,34 @@
   }
 
   /* ============================================
-     Proun Stage — 3D Cylinder Carousel
+     Proun Stage — 3D Cylinder Gallery
      ============================================ */
   .proun-stage {
     position: relative;
-    max-width: 1200px;
+    max-width: 1260px;
     margin: 0 auto;
     padding: 0 4vw;
-    height: 500px;
-    overflow: hidden;
+    height: 520px;
+    overflow: visible;
   }
 
   .proun-grid-bg {
     position: absolute;
     inset: 0;
     pointer-events: none;
-    opacity: 0.22;
+    opacity: 0.18;
     background-image:
       repeating-linear-gradient(
         28deg,
         transparent 0px,
         transparent 39px,
-        rgba(196, 164, 74, 0.08) 40px
+        rgba(196, 164, 74, 0.07) 40px
       ),
       repeating-linear-gradient(
         -28deg,
         transparent 0px,
         transparent 39px,
-        rgba(196, 164, 74, 0.08) 40px
+        rgba(196, 164, 74, 0.07) 40px
       );
   }
 
@@ -260,8 +275,8 @@
   .proun-scene {
     position: absolute;
     inset: 0;
-    perspective: 1300px;
-    perspective-origin: 50% 48%;
+    perspective: 1900px;
+    perspective-origin: 50% 46%;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -269,9 +284,8 @@
   }
   .proun-scene:active { cursor: grabbing; }
 
-  /* Cylinder radius, overridable per breakpoint */
   .proun-cylinder {
-    --R: 480px;
+    --R: 740px;
     width: 0;
     height: 0;
     transform-style: preserve-3d;
@@ -282,10 +296,10 @@
   .proun-item {
     position: absolute;
     display: block;
-    width: 170px;
-    height: 132px;
-    margin-left: -85px;
-    margin-top: -66px;
+    width: 150px;
+    min-height: 112px;
+    margin-left: -75px;
+    margin-top: -56px;
     backface-visibility: hidden;
     transform: rotateY(var(--a, 0deg)) translateZ(var(--R));
     text-decoration: none;
@@ -299,10 +313,14 @@
                 border-color 0.25s ease;
   }
 
+  .proun-item {
+    margin-top: calc(-56px + var(--y, 0px));
+  }
+
   /* ——— Hover ——— */
   .proun-item:hover {
     transform: rotateY(var(--a, 0deg)) translateZ(var(--R)) scale(1.22);
-    box-shadow: -10px 10px 0 var(--col, var(--gold));
+    box-shadow: -8px 8px 0 var(--col, var(--gold));
     border-color: var(--col, var(--gold));
     z-index: 999;
   }
@@ -311,7 +329,7 @@
   .proun-item:hover .proun-item__hover { opacity: 1; }
   .proun-item:hover .proun-item__arrow { transform: translateX(4px); opacity: 1; }
 
-  /* ——— Card inner layout ——— */
+  /* ——— Card internals ——— */
   .proun-item__stripe {
     position: absolute;
     top: 0;
@@ -325,7 +343,7 @@
     display: flex;
     flex-direction: column;
     height: 100%;
-    padding: 14px 12px 8px 16px;
+    padding: 12px 10px 7px 14px;
     position: relative;
   }
 
@@ -338,7 +356,7 @@
 
   .proun-item__name {
     font-family: var(--font-display);
-    font-size: 0.82rem;
+    font-size: 0.8rem;
     letter-spacing: 0.04em;
     text-transform: uppercase;
     color: var(--black);
@@ -348,7 +366,7 @@
 
   .proun-item__stars {
     font-family: var(--font-body);
-    font-size: 0.7rem;
+    font-size: 0.68rem;
     font-weight: 600;
     color: var(--gold-dark);
     white-space: nowrap;
@@ -361,7 +379,7 @@
     align-items: center;
     gap: 4px;
     font-family: var(--font-body);
-    font-size: 0.65rem;
+    font-size: 0.62rem;
     font-weight: 500;
     color: var(--black);
     opacity: 0.4;
@@ -371,22 +389,22 @@
 
   .proun-item__dot {
     display: inline-block;
-    width: 6px;
-    height: 6px;
+    width: 5px;
+    height: 5px;
     border-radius: 50%;
     flex-shrink: 0;
   }
 
-  /* ——— Hover description overlay ——— */
+  /* ——— Hover detail overlay ——— */
   .proun-item__hover {
     position: absolute;
     bottom: 0;
     left: 0;
     right: 0;
-    padding: 18px 12px 8px 16px;
+    padding: 16px 10px 7px 14px;
     background: linear-gradient(to top,
       var(--white-warm) 0%,
-      var(--white-warm) 55%,
+      var(--white-warm) 50%,
       transparent 100%);
     opacity: 0;
     transition: opacity 0.3s ease;
@@ -395,11 +413,11 @@
 
   .proun-item__desc {
     font-family: var(--font-body);
-    font-size: 0.68rem;
+    font-size: 0.66rem;
     color: var(--black);
     opacity: 0.8;
-    margin: 0 0 4px;
-    line-height: 1.45;
+    margin: 0 0 3px;
+    line-height: 1.4;
     display: -webkit-box;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
@@ -411,45 +429,17 @@
     align-items: center;
     gap: 8px;
     font-family: var(--font-body);
-    font-size: 0.58rem;
+    font-size: 0.56rem;
     color: var(--black);
     opacity: 0.5;
   }
 
   .proun-item__arrow {
     margin-left: auto;
-    font-size: 0.8rem;
+    font-size: 0.75rem;
     color: var(--red);
     opacity: 0.6;
     transition: transform 0.25s ease, opacity 0.25s ease;
-  }
-
-  /* ——— Edge fade vignette ——— */
-  .proun-fade {
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-    background: linear-gradient(
-      to right,
-      var(--white-off) 0%,
-      transparent 14%,
-      transparent 86%,
-      var(--white-off) 100%
-    );
-    z-index: 2;
-  }
-
-  /* ——— Center spotlight ——— */
-  .proun-spotlight {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 400px;
-    height: 400px;
-    margin: -200px 0 0 -200px;
-    pointer-events: none;
-    background: radial-gradient(ellipse, rgba(196, 164, 74, 0.05) 0%, transparent 70%);
-    z-index: 0;
   }
 
   /* ============================================
@@ -461,16 +451,16 @@
     pointer-events: none;
     user-select: none;
     line-height: 1;
-    animation: proun-star-drift 4s ease-in-out infinite;
+    animation: proun-star-drift 4.5s ease-in-out infinite;
     will-change: transform, opacity;
-    text-shadow: 0 0 10px rgba(204, 0, 0, 0.35), 0 0 2px rgba(204, 0, 0, 0.15);
+    text-shadow: 0 0 12px rgba(204, 0, 0, 0.3), 0 0 2px rgba(204, 0, 0, 0.12);
     z-index: 3;
   }
 
   @keyframes proun-star-drift {
-    0%, 100% { opacity: 0.06; transform: translateY(0) scale(1); }
-    35% { opacity: 0.22; transform: translateY(-8px) scale(1.15); }
-    65% { opacity: 0.15; transform: translateY(-4px) scale(1.05); }
+    0%, 100% { opacity: 0.05; transform: translateY(0) scale(1); }
+    35% { opacity: 0.20; transform: translateY(-7px) scale(1.12); }
+    65% { opacity: 0.12; transform: translateY(-3px) scale(1.04); }
   }
 
   /* ============================================
@@ -505,32 +495,32 @@
      Responsive
      ============================================ */
   @media (max-width: 860px) {
-    .proun-stage { height: 380px; }
-    .proun-scene { perspective: 1000px; }
-    .proun-cylinder { --R: 360px; }
-    .proun-item { width: 140px; height: 108px; margin-left: -70px; margin-top: -54px; }
-    .proun-item__inner { padding: 10px 10px 6px 14px; }
-    .proun-item__name { font-size: 0.7rem; }
-    .proun-item__stars { font-size: 0.6rem; }
-    .proun-item__lang { font-size: 0.55rem; }
+    .proun-stage { height: 400px; }
+    .proun-scene { perspective: 1300px; }
+    .proun-cylinder { --R: 520px; }
+    .proun-item { width: 120px; min-height: 92px; margin-left: -60px; margin-top: calc(-46px + var(--y, 0px)); }
+    .proun-item__inner { padding: 9px 8px 5px 12px; }
+    .proun-item__name { font-size: 0.68rem; }
+    .proun-item__stars { font-size: 0.58rem; }
+    .proun-item__lang { display: none; }
     .proun-item__hover { display: none; }
     .proun-star { display: none; }
-    .proun-grid-bg { opacity: 0.12; }
+    .proun-grid-bg { opacity: 0.10; }
   }
 
   @media (max-width: 540px) {
     .proun-stage { height: 280px; }
-    .proun-scene { perspective: 700px; }
-    .proun-cylinder { --R: 240px; }
-    .proun-item { width: 100px; height: 78px; margin-left: -50px; margin-top: -39px; border-width: 1.5px; }
-    .proun-item__inner { padding: 7px 7px 4px 10px; }
-    .proun-item__name { font-size: 0.55rem; }
-    .proun-item__stars { font-size: 0.48rem; }
+    .proun-scene { perspective: 850px; perspective-origin: 50% 44%; }
+    .proun-cylinder { --R: 320px; }
+    .proun-item { width: 88px; min-height: 68px; margin-left: -44px; margin-top: calc(-34px + var(--y, 0px)); border-width: 1.5px; }
+    .proun-item__inner { padding: 6px 6px 3px 8px; }
+    .proun-item__name { font-size: 0.5rem; }
+    .proun-item__stars { font-size: 0.45rem; }
     .proun-item__lang { display: none; }
     .proun-item__stripe { width: 3px; }
     .proun-item:hover { transform: rotateY(var(--a)) translateZ(var(--R)) scale(1.15); box-shadow: -4px 4px 0 var(--col, var(--gold)); }
-    .proun-item .crop-mark { width: 12px; height: 12px; border-width: 2px; }
-    .proun-spotlight { width: 200px; height: 200px; margin: -100px 0 0 -100px; }
-    .proun-fade { background: linear-gradient(to right, var(--white-off) 0%, transparent 10%, transparent 90%, var(--white-off) 100%); }
+    .proun-item .crop-mark { width: 10px; height: 10px; border-width: 2px; }
+    .proun-item .crop-mark--tl { border-width: 2px 0 0 2px; }
+    .proun-item .crop-mark--br { border-width: 0 2px 2px 0; }
   }
 </style>
