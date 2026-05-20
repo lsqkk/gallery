@@ -55,49 +55,68 @@
 
   async function loadRepos() {
     try {
-      var res = await fetch('https://api.github.com/users/lsqkk/repos?sort=updated&per_page=30&type=owner');
+      var res = await fetch('https://api.github.com/users/lsqkk/repos?sort=updated&per_page=100&type=owner');
       if (!res.ok) throw new Error('HTTP ' + res.status);
       var repos = await res.json();
 
-      var filtered = repos
+      var all = repos
         .filter(function(r) { return !EXCLUDED.includes(r.name) && !r.fork; })
         .sort(function(a, b) { return b.stargazers_count - a.stargazers_count; });
 
-      if (filtered.length === 0) {
+      var count = all.length;
+
+      if (count === 0) {
         loading.textContent = '— No repositories —';
         return;
       }
 
       loading.style.display = 'none';
-      var count = Math.min(filtered.length, 20);
 
-      // ——— LAYOUT ———
-      // R=440px | 12 cols × 30° | 2×3 + 4×2 + 6×1 = 20 cards, 0 empty columns
-      // No empty columns → no sudden big gaps
-      var COLS = 12;
-      var ANGLE_STEP = 360 / COLS;
+      // ——— DYNAMIC LAYOUT ———
+      // Calculate column count and cylinder radius so gap stays ~70px
+      var minCols = Math.ceil(count / 3);
+      var idealCols = Math.ceil(count / 2.2);
+      var COLS = Math.min(20, Math.max(minCols, idealCols));
 
-      var colTypes = [];
-      for (var i = 0; i < 2; i++) colTypes.push(3);
-      for (var i = 0; i < 4; i++) colTypes.push(2);
-      for (var i = 0; i < 6; i++) colTypes.push(1);
-      shuffle(colTypes);
+      // R = chord / (2·sin(π/COLS))  where chord = 140px card + 70px gap = 210px
+      var R = Math.round(210 / (2 * Math.sin(Math.PI / COLS)));
+      R = Math.min(680, Math.max(280, R));
+
+      cylinder.style.setProperty('--R-desktop', R + 'px');
+      scene.style.setProperty('--perspective', Math.round(R * 2.3) + 'px');
+
+      // Distribute cards across columns: start all 1, promote 1→2 then 2→3
+      var dist = new Array(COLS).fill(1);
+      var remaining = count - COLS;
+      // Phase 1: promote 1→2
+      var p1 = Math.min(remaining, COLS);
+      for (var i = 0; i < p1; i++) dist[i] = 2;
+      remaining -= p1;
+      // Phase 2: promote 2→3
+      var j = 0;
+      while (remaining > 0 && j < COLS) {
+        if (dist[j] < 3) { dist[j] = 3; remaining--; }
+        j++;
+      }
+      shuffle(dist);
 
       var cardIdx = 0;
+      var ANGLE_STEP = 360 / COLS;
+
       for (var p = 0; p < COLS && cardIdx < count; p++) {
-        var n = colTypes[p];
+        var n = dist[p];
         if (!n) continue;
 
-        var colAngle = p * ANGLE_STEP + (Math.random() - 0.5) * 6;
+        var colAngle = p * ANGLE_STEP + (Math.random() - 0.5) * Math.min(8, ANGLE_STEP * 0.3);
 
         var ys = n === 3 ? [-120, 0, 120]
                : n === 2 ? [-60, 60]
                : [0];
 
         for (var k = 0; k < n && cardIdx < count; k++, cardIdx++) {
-          var repo = filtered[cardIdx];
-          var yOffset = ys[Math.min(k, ys.length - 1)] + (Math.random() - 0.5) * 16;
-          var angle = colAngle + (Math.random() - 0.5) * 3;
+          var repo = all[cardIdx];
+          var yPos = ys[Math.min(k, ys.length - 1)] + (Math.random() - 0.5) * 16;
+          var angle = colAngle + (Math.random() - 0.5) * Math.min(3, ANGLE_STEP * 0.15);
           var colAccent = langColor(repo.language);
 
           var item = document.createElement('a');
@@ -106,7 +125,7 @@
           item.rel = 'noopener noreferrer';
           item.className = 'proun-item';
           item.style.setProperty('--a', angle.toFixed(1) + 'deg');
-          item.style.setProperty('--y', yOffset.toFixed(0) + 'px');
+          item.style.setProperty('--y', yPos.toFixed(0) + 'px');
           item.style.setProperty('--col', colAccent);
 
           var shortName = repo.name.length > 16 ? repo.name.slice(0, 14) + '…' : repo.name;
@@ -132,7 +151,8 @@
       }
 
       // Stars
-      for (var s = 0; s < 24; s++) {
+      var starCount = Math.min(36, Math.max(12, Math.round(count * 0.8)));
+      for (var s = 0; s < starCount; s++) {
         var star = document.createElement('span');
         star.className = 'proun-star';
         star.textContent = '★';
@@ -144,8 +164,7 @@
         scene.appendChild(star);
       }
 
-      // Rotation — 0.13°/frame = 7.8°/sec, full lap in ~46 sec
-      // Between 30° columns: ~3.8 sec — steady flow no dead zones
+      // Rotation — 0.13°/frame
       var rotation = 0, isPaused = false, isDragging = false;
       var dragStartX = 0, dragStartRot = 0;
       var SPEED = 0.13;
@@ -204,13 +223,13 @@
 
   /* ============================================
      Proun Stage
-     R=440px | perspective=1000px | 12 cols × 30°
+     Dynamic R (set by JS as --R-desktop)
      Card: 140×90px | 0 empty columns
      ============================================ */
   .proun-stage {
     position: relative; max-width: 1260px;
     margin: 0 auto; padding: 0 4vw;
-    height: 540px; overflow: visible;
+    height: 560px; overflow: visible;
   }
 
   .proun-grid-bg {
@@ -223,7 +242,7 @@
 
   .proun-scene {
     position: absolute; inset: 0;
-    perspective: 1000px;
+    perspective: var(--perspective, 1000px);
     perspective-origin: 50% 46%;
     display: flex; align-items: center; justify-content: center;
     cursor: grab;
@@ -231,7 +250,7 @@
   .proun-scene:active { cursor: grabbing; }
 
   .proun-cylinder {
-    --R: 440px;
+    --R: var(--R-desktop, 440px);
     width: 0; height: 0;
     transform-style: preserve-3d;
     transform: rotateY(var(--rot, 0deg));
@@ -380,7 +399,7 @@
      ============================================ */
   @media (max-width: 860px) {
     .proun-stage { height: 400px; }
-    .proun-scene { perspective: 750px; }
+    .proun-scene { perspective: 800px; }
     .proun-cylinder { --R: 320px; }
     .proun-item { width: 100px; height: 68px; margin-left: -50px; margin-top: calc(-34px + var(--y,0px)); }
     .proun-item__inner { padding: 5px 8px 4px 10px; }
