@@ -1,9 +1,13 @@
-<section class="opensource section">
+<section class="opensource section" id="opensource">
   <div class="container">
     <h2 class="section-title" data-reveal>ОТКРЫТЫЙ РЕПОЗИТОРИЙ</h2>
     <p class="opensource__sub" data-reveal>Открытый репозиторий · 开源仓库</p>
+  </div>
 
-    <div class="opensource__grid" id="gh-repos">
+  <div class="proun-scene" id="proun-scene">
+    <div class="proun-grid-bg" aria-hidden="true"></div>
+
+    <div class="proun-grid" id="gh-repos">
       <div class="opensource__loading" id="gh-loading">
         <span class="opensource__loading-dot">●</span>
         <span class="opensource__loading-dot">●</span>
@@ -18,6 +22,7 @@
   var EXCLUDED = ['guide-vehicle', 'lsqkk.github.io', 'image', 'lsqkk', 'gallery'];
   var grid = document.getElementById('gh-repos');
   var loading = document.getElementById('gh-loading');
+  var scene = document.getElementById('proun-scene');
 
   var LANG_COLORS = {
     'JavaScript': '#f1e05a',
@@ -56,42 +61,76 @@
 
       loading.style.display = 'none';
 
-      filtered.forEach(function(repo) {
-        var card = document.createElement('a');
-        card.href = repo.html_url;
-        card.target = '_blank';
-        card.rel = 'noopener noreferrer';
-        card.className = 'repo-card';
-        card.setAttribute('data-reveal', '');
+      var total = filtered.length;
 
-        var desc = repo.description || 'No description';
+      filtered.forEach(function(repo, i) {
+        var sizeClass;
+        if (i < 2) sizeClass = 'proun-item--xl';
+        else if (i < 6) sizeClass = 'proun-item--lg';
+        else if (i < 14) sizeClass = 'proun-item--md';
+        else sizeClass = 'proun-item--sm';
 
-        var html = '<div class="repo-card__top">';
-        html += '<h3 class="repo-card__name">' + escapeHtml(repo.name) + '</h3>';
-        html += '<div class="repo-card__lang">';
-        if (repo.language) {
-          html += '<span class="repo-card__dot" style="background:' + langColor(repo.language) + '"></span>';
-          html += '<span class="repo-card__lang-text">' + repo.language + '</span>';
-        }
-        html += '</div>';
-        html += '</div>';
-        html += '<p class="repo-card__desc">' + escapeHtml(desc) + '</p>';
-        html += '<div class="repo-card__meta">';
-        html += '<span class="repo-card__stat">&#9733; ' + repo.stargazers_count + '</span>';
-        if (repo.forks_count > 0) {
-          html += '<span class="repo-card__stat">⑂ ' + repo.forks_count + '</span>';
-        }
-        html += '<span class="repo-card__updated">' + formatDate(repo.updated_at) + '</span>';
-        html += '<span class="repo-card__arrow">→</span>';
-        html += '</div>';
-        html += '<div class="crop-mark crop-mark--tl"></div>';
-        html += '<div class="crop-mark crop-mark--br"></div>';
+        var rot = (Math.random() - 0.5) * (sizeClass === 'proun-item--xl' ? 2 : sizeClass === 'proun-item--lg' ? 3 : sizeClass === 'proun-item--md' ? 5 : 6);
+        var yOff = Math.floor(Math.random() * 16 - 8);
 
-        card.innerHTML = html;
-        grid.appendChild(card);
+        var col = langColor(repo.language);
+
+        var item = document.createElement('a');
+        item.href = repo.html_url;
+        item.target = '_blank';
+        item.rel = 'noopener noreferrer';
+        item.className = 'proun-item ' + sizeClass;
+        item.setAttribute('data-reveal', '');
+        item.style.setProperty('--rot', rot.toFixed(1) + 'deg');
+        item.style.setProperty('--y', yOff + 'px');
+        item.style.setProperty('--color', col);
+
+        // Darken language color for the hover border accent
+        // Use the color as-is — it works with the constructivist palette
+
+        var desc = repo.description || '—';
+        var shortName = repo.name.length > 16 ? repo.name.slice(0, 14) + '…' : repo.name;
+
+        item.innerHTML =
+          '<span class="proun-item__stripe" style="background:' + col + '"></span>' +
+          '<div class="proun-item__body">' +
+            '<div class="proun-item__top">' +
+              '<span class="proun-item__name">' + escapeHtml(shortName) + '</span>' +
+              '<span class="proun-item__stars">★ ' + repo.stargazers_count + '</span>' +
+            '</div>' +
+            (repo.language ? '<span class="proun-item__lang"><span class="proun-item__dot" style="background:' + col + '"></span>' + repo.language + '</span>' : '') +
+          '</div>' +
+          '<div class="proun-item__hover">' +
+            '<p class="proun-item__desc">' + escapeHtml(desc) + '</p>' +
+            '<div class="proun-item__foot">' +
+              (repo.forks_count > 0 ? '<span class="proun-item__fork">⑂ ' + repo.forks_count + '</span>' : '') +
+              '<span class="proun-item__update">' + formatDate(repo.updated_at) + '</span>' +
+              '<span class="proun-item__arrow">→</span>' +
+            '</div>' +
+          '</div>' +
+          '<span class="crop-mark crop-mark--tl"></span>' +
+          '<span class="crop-mark crop-mark--br"></span>';
+
+        grid.appendChild(item);
       });
 
-      // Trigger reveal observer
+      // ——— Floating Red Stars (decorative, Option 4 blend) ———
+      for (var s = 0; s < 7; s++) {
+        (function() {
+          var star = document.createElement('span');
+          star.className = 'proun-star';
+          star.textContent = '★';
+          star.style.left = (5 + Math.random() * 88) + '%';
+          star.style.top = (4 + Math.random() * 88) + '%';
+          star.style.fontSize = (10 + Math.random() * 22) + 'px';
+          star.style.animationDelay = (Math.random() * 4).toFixed(2) + 's';
+          star.style.animationDuration = (3 + Math.random() * 2).toFixed(1) + 's';
+          star.style.opacity = '0.08';
+          scene.appendChild(star);
+        })();
+      }
+
+      // Trigger reveal
       requestAnimationFrame(function() {
         var observer = new IntersectionObserver(function(entries) {
           entries.forEach(function(entry) {
@@ -100,8 +139,8 @@
               observer.unobserve(entry.target);
             }
           });
-        }, { threshold: 0.08, rootMargin: '0px 0px -40px 0px' });
-        grid.querySelectorAll('.repo-card').forEach(function(el) {
+        }, { threshold: 0.06, rootMargin: '0px 0px -40px 0px' });
+        grid.querySelectorAll('.proun-item').forEach(function(el) {
           observer.observe(el);
         });
       });
@@ -140,153 +179,275 @@
     letter-spacing: 0.2em;
     text-transform: uppercase;
     color: var(--gold-dark);
-    margin-bottom: 3.5rem;
+    margin-bottom: 3rem;
     margin-top: -1.8rem;
   }
 
-  .opensource__grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-    gap: 24px;
+  /* ——— Proun Scene ——— */
+  .proun-scene {
+    position: relative;
+    max-width: 1160px;
+    margin: 0 auto;
+    padding: 0 6vw 60px;
+    min-height: 320px;
   }
 
-  /* ---- Repo Card ---- */
-  .repo-card {
+  /* Isometric grid background */
+  .proun-grid-bg {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0.35;
+    background-image:
+      repeating-linear-gradient(
+        28deg,
+        transparent 0px,
+        transparent 41px,
+        rgba(196, 164, 74, 0.10) 42px
+      ),
+      repeating-linear-gradient(
+        -28deg,
+        transparent 0px,
+        transparent 41px,
+        rgba(196, 164, 74, 0.10) 42px
+      );
+  }
+
+  /* ——— Proun Grid (4-col bento) ——— */
+  .proun-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 18px;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* ——— Proun Item ——— */
+  .proun-item {
     position: relative;
     display: flex;
     flex-direction: column;
-    gap: 16px;
     border: 2px solid var(--black);
-    padding: 32px 30px 26px;
     background: var(--white-warm);
     text-decoration: none;
     color: inherit;
-    min-height: 140px;
+    cursor: pointer;
+    transition:
+      transform 0.4s cubic-bezier(0.16, 1, 0.3, 1),
+      box-shadow 0.4s cubic-bezier(0.16, 1, 0.3, 1),
+      border-color 0.3s ease;
+    transform: rotate(var(--rot, 0deg)) translateY(var(--y, 0px));
     opacity: 0;
-    transform: translateY(28px);
-    transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1),
-                transform 0.6s cubic-bezier(0.16, 1, 0.3, 1),
-                box-shadow 0.25s ease,
-                border-color 0.25s ease;
+    transform-style: preserve-3d;
+    will-change: transform;
   }
 
-  .repo-card.revealed {
+  .proun-item.revealed {
     opacity: 1;
-    transform: translateY(0);
   }
 
-  .repo-card:hover {
-    box-shadow: -5px 5px 0 var(--gold);
-    border-color: var(--gold);
+  .proun-item--xl {
+    grid-column: span 2;
+    grid-row: span 2;
+    min-height: 240px;
   }
 
-  .repo-card__top {
+  .proun-item--lg {
+    grid-column: span 2;
+    min-height: 130px;
+  }
+
+  .proun-item--md {
+    min-height: 110px;
+  }
+
+  .proun-item--sm {
+    min-height: 90px;
+  }
+
+  /* Language color stripe (left) */
+  .proun-item__stripe {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 5px;
+    height: 100%;
+    transition: width 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  /* ——— Body ——— */
+  .proun-item__body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 16px 18px 12px 22px;
+  }
+
+  .proun-item--xl .proun-item__body {
+    padding: 24px 26px 18px 30px;
+  }
+
+  .proun-item__top {
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
-    gap: 12px;
+    gap: 10px;
   }
 
-  .repo-card__name {
-    font-family: var(--font-body);
-    font-size: clamp(1.05rem, 1.3vw, 1.2rem);
-    font-weight: 700;
-    letter-spacing: 0.01em;
+  .proun-item__name {
+    font-family: var(--font-display);
+    font-size: clamp(0.85rem, 1.1vw, 1rem);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
     color: var(--black);
-    text-transform: none;
-    margin: 0;
-    line-height: 1.3;
     word-break: break-word;
+    line-height: 1.2;
   }
 
-  .repo-card__lang {
-    display: flex;
+  .proun-item--xl .proun-item__name {
+    font-size: clamp(1.1rem, 1.6vw, 1.35rem);
+  }
+
+  .proun-item--xl .proun-item__top {
+    margin-bottom: 8px;
+  }
+
+  .proun-item__stars {
+    font-family: var(--font-body);
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--gold-dark);
+    white-space: nowrap;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+
+  .proun-item__lang {
+    display: inline-flex;
     align-items: center;
     gap: 5px;
-    flex-shrink: 0;
-    margin-top: 3px;
+    font-family: var(--font-body);
+    font-size: 0.72rem;
+    font-weight: 500;
+    color: var(--black);
+    opacity: 0.5;
+    margin-top: auto;
+    padding-top: 6px;
   }
 
-  .repo-card__dot {
+  .proun-item__dot {
     display: inline-block;
-    width: 9px;
-    height: 9px;
+    width: 7px;
+    height: 7px;
     border-radius: 50%;
     flex-shrink: 0;
   }
 
-  .repo-card__lang-text {
-    font-family: var(--font-body);
-    font-size: 0.8rem;
-    font-weight: 500;
-    color: var(--black);
-    opacity: 0.7;
+  /* ——— Hover reveal panel ——— */
+  .proun-item__hover {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: var(--white-off);
+    border-top: 2px solid var(--color, var(--gold));
+    padding: 10px 18px 12px 22px;
+    transform: translateY(100%);
+    transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+    z-index: 5;
   }
 
-  .repo-card__desc {
-    font-size: clamp(0.88rem, 1vw, 0.95rem);
+  .proun-item--xl .proun-item__hover {
+    padding: 14px 26px 16px 30px;
+  }
+
+  .proun-item__desc {
+    font-family: var(--font-body);
+    font-size: clamp(0.75rem, 0.9vw, 0.82rem);
     color: var(--black);
-    opacity: 0.7;
-    line-height: 1.65;
-    margin: 0;
+    opacity: 0.75;
+    margin: 0 0 8px;
+    line-height: 1.55;
     display: -webkit-box;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
-    flex: 1;
   }
 
-  .repo-card__meta {
+  .proun-item__foot {
     display: flex;
     align-items: center;
-    gap: 16px;
-    margin-top: 6px;
-    flex-wrap: wrap;
-    border-top: 1px solid rgba(17, 17, 17, 0.1);
-    padding-top: 12px;
-  }
-
-  .repo-card__stat {
+    gap: 12px;
     font-family: var(--font-body);
-    font-size: 0.8rem;
-    font-weight: 500;
-    color: var(--black);
-    opacity: 0.6;
-    letter-spacing: 0.02em;
-    display: inline-flex;
-    align-items: center;
-    gap: 3px;
-  }
-
-  .repo-card__updated {
-    font-family: var(--font-body);
-    font-size: 0.72rem;
-    font-weight: 400;
+    font-size: 0.68rem;
     color: var(--black);
     opacity: 0.45;
+  }
+
+  .proun-item__fork {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+  }
+
+  .proun-item__update {
     margin-right: auto;
   }
 
-  .repo-card__arrow {
-    font-size: 1.15rem;
-    color: var(--gold);
-    opacity: 0.45;
-    transition: transform 0.2s ease, opacity 0.2s ease;
+  .proun-item__arrow {
+    font-size: 1rem;
+    color: var(--red);
+    opacity: 0.6;
+    transition: transform 0.25s ease, opacity 0.25s ease;
   }
 
-  .repo-card:hover .repo-card__arrow {
+  /* ——— Hover states ——— */
+  .proun-item:hover {
+    transform: rotate(0deg) translateY(-6px);
+    box-shadow: -8px 8px 0 var(--color, var(--gold));
+    border-color: var(--color, var(--gold));
+    z-index: 10;
+  }
+
+  .proun-item:hover .proun-item__stripe {
+    width: 7px;
+  }
+
+  .proun-item:hover .proun-item__hover {
+    transform: translateY(0);
+  }
+
+  .proun-item:hover .proun-item__arrow {
     transform: translateX(5px);
-    opacity: 0.8;
+    opacity: 1;
   }
 
-  /* ---- Loading dots ---- */
+  /* ——— Decorative Stars (Option 4 blend) ——— */
+  .proun-star {
+    position: absolute;
+    color: var(--red);
+    pointer-events: none;
+    user-select: none;
+    line-height: 1;
+    animation: proun-star-float 3.5s ease-in-out infinite;
+    will-change: transform, opacity;
+  }
+
+  @keyframes proun-star-float {
+    0%, 100% { opacity: 0.08; transform: translateY(0) rotate(0deg) scale(1); }
+    25% { opacity: 0.22; }
+    50% { opacity: 0.12; transform: translateY(-12px) rotate(12deg) scale(1.08); }
+    75% { opacity: 0.20; }
+  }
+
+  /* ——— Loading ——— */
   .opensource__loading {
     grid-column: 1 / -1;
     display: flex;
     justify-content: center;
     align-items: center;
     gap: 8px;
-    padding: 48px 0;
+    padding: 56px 0;
     font-family: var(--font-body);
     font-size: 1rem;
     letter-spacing: 0.3em;
@@ -295,7 +456,7 @@
   }
 
   .opensource__loading-dot {
-    animation: dot-pulse 1.4s ease-in-out infinite;
+    animation: proun-dot-pulse 1.4s ease-in-out infinite;
   }
 
   .opensource__loading-dot:nth-child(2) {
@@ -306,21 +467,75 @@
     animation-delay: 0.4s;
   }
 
-  @keyframes dot-pulse {
+  @keyframes proun-dot-pulse {
     0%, 80%, 100% { opacity: 0.2; transform: scale(0.8); }
     40% { opacity: 0.8; transform: scale(1.1); }
   }
 
-  @media (max-width: 640px) {
-    .opensource__grid {
-      grid-template-columns: 1fr;
-      gap: 18px;
+  /* ——— Responsive ——— */
+  @media (max-width: 768px) {
+    .proun-grid {
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
     }
-    .repo-card {
-      padding: 22px 20px 18px;
+
+    .proun-item--xl {
+      grid-column: span 2;
+      grid-row: span 1;
+      min-height: 100px;
     }
-    .repo-card__desc {
-      -webkit-line-clamp: 3;
+
+    .proun-item--lg {
+      grid-column: span 2;
+      min-height: 90px;
+    }
+
+    .proun-item--md,
+    .proun-item--sm {
+      min-height: 85px;
+    }
+
+    .proun-item__body {
+      padding: 12px 14px 10px 16px;
+    }
+
+    .proun-item--xl .proun-item__body {
+      padding: 16px 18px 12px 20px;
+    }
+
+    .proun-item__name {
+      font-size: 0.78rem;
+    }
+
+    .proun-item--xl .proun-item__name {
+      font-size: 0.95rem;
+    }
+
+    .proun-item__hover {
+      display: none;
+    }
+
+    .proun-grid-bg {
+      opacity: 0.18;
+    }
+
+    .proun-star {
+      display: none;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .proun-grid {
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .proun-item--xl,
+    .proun-item--lg,
+    .proun-item--md,
+    .proun-item--sm {
+      grid-column: span 1;
+      min-height: 80px;
     }
   }
 </style>
