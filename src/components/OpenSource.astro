@@ -64,68 +64,84 @@
       loading.style.display = 'none';
 
       var count = filtered.length;
-      var angleStep = 360 / count;
+      var POSITIONS = 8;               // number of angular columns
+      var angleStep = 360 / POSITIONS;
 
-      // Assign vertical levels: top (-1), center (0), bottom (+1)
-      // No two adjacent cards share the same level
-      var Y_BASES = [-58, 0, 58];
-      var levelIdx = [];
-      for (var i = 0; i < count; i++) {
-        var pool = [0, 1, 2];
-        if (i > 0) {
-          pool = pool.filter(function(l) { return l !== levelIdx[i - 1]; });
+      // Determine how many cards per column (some 3, some 2)
+      var perColumn = [];
+      var threeLeft = 4;  // 4 columns get 3 cards
+      for (var p = 0; p < POSITIONS; p++) {
+        if (threeLeft > 0 && (threeLeft >= POSITIONS - p || Math.random() < 0.5)) {
+          perColumn.push(3);
+          threeLeft--;
+        } else {
+          perColumn.push(2);
         }
-        levelIdx.push(pool[Math.floor(Math.random() * pool.length)]);
-      }
-      // Also ensure last and first differ if it's a wrap
-      if (count > 1 && levelIdx[count - 1] === levelIdx[0]) {
-        var alt = [0, 1, 2].filter(function(l) { return l !== levelIdx[0]; });
-        levelIdx[count - 1] = alt[Math.floor(Math.random() * alt.length)];
       }
 
-      filtered.forEach(function(repo, i) {
-        var angle = i * angleStep + angleStep * 0.25;
-        var col = langColor(repo.language);
-        var yPos = Y_BASES[levelIdx[i]] + (Math.random() - 0.5) * 16;
+      var Y_BASES = [-52, 0, 52];  // top, center, bottom
 
-        var item = document.createElement('a');
-        item.href = repo.html_url;
-        item.target = '_blank';
-        item.rel = 'noopener noreferrer';
-        item.className = 'proun-item';
-        item.style.setProperty('--a', angle.toFixed(1) + 'deg');
-        item.style.setProperty('--y', yPos.toFixed(0) + 'px');
-        item.style.setProperty('--col', col);
+      var cardIdx = 0;
+      for (var p = 0; p < POSITIONS && cardIdx < count; p++) {
+        var n = Math.min(perColumn[p], count - cardIdx);
+        // Pick which levels this column uses
+        var levels;
+        if (n === 3) {
+          levels = [0, 1, 2];
+        } else {
+          var r = Math.random();
+          if (r < 0.4) levels = [0, 1];      // top + center
+          else if (r < 0.8) levels = [1, 2]; // center + bottom
+          else levels = [0, 2];               // top + bottom
+        }
 
-        var shortName = repo.name.length > 16 ? repo.name.slice(0, 14) + '…' : repo.name;
-        var desc = repo.description || '—';
+        for (var k = 0; k < n && cardIdx < count; k++, cardIdx++) {
+          var repo = filtered[cardIdx];
+          var col = langColor(repo.language);
 
-        item.innerHTML =
-          '<span class="proun-item__stripe" style="background:' + col + '"></span>' +
-          '<span class="proun-item__inner">' +
-            '<span class="proun-item__top">' +
-              '<span class="proun-item__name">' + escapeHtml(shortName) + '</span>' +
-              '<span class="proun-item__stars">★ ' + repo.stargazers_count + '</span>' +
-            '</span>' +
-            (repo.language ? '<span class="proun-item__lang"><span class="proun-item__dot" style="background:' + col + '"></span>' + repo.language + '</span>' : '') +
-            '<span class="proun-item__hover">' +
-              '<span class="proun-item__desc">' + escapeHtml(desc) + '</span>' +
-              '<span class="proun-item__foot">' +
-                (repo.forks_count > 0 ? '<span>⑂ ' + repo.forks_count + '</span>' : '') +
-                '<span>' + formatDate(repo.updated_at) + '</span>' +
-                '<span class="proun-item__arrow">→</span>' +
+          // Angle: column center ± small jitter so same-column cards fan slightly
+          var angleJitter = (Math.random() - 0.5) * 3;
+          var angle = p * angleStep + angleStep * 0.3 + angleJitter;
+
+          var yPos = Y_BASES[levels[k]] + (Math.random() - 0.5) * 14;
+
+          var item = document.createElement('a');
+          item.href = repo.html_url;
+          item.target = '_blank';
+          item.rel = 'noopener noreferrer';
+          item.className = 'proun-item';
+          item.style.setProperty('--a', angle.toFixed(1) + 'deg');
+          item.style.setProperty('--y', yPos.toFixed(0) + 'px');
+          item.style.setProperty('--col', col);
+
+          var shortName = repo.name.length > 14 ? repo.name.slice(0, 12) + '…' : repo.name;
+          var desc = repo.description || '—';
+
+          item.innerHTML =
+            '<span class="proun-item__stripe" style="background:' + col + '"></span>' +
+            '<span class="proun-item__inner">' +
+              '<span class="proun-item__top">' +
+                '<span class="proun-item__name">' + escapeHtml(shortName) + '</span>' +
+                '<span class="proun-item__stars">★ ' + repo.stargazers_count + '</span>' +
+              '</span>' +
+              (repo.language ? '<span class="proun-item__lang"><span class="proun-item__dot" style="background:' + col + '"></span>' + repo.language + '</span>' : '') +
+              '<span class="proun-item__hover">' +
+                '<span class="proun-item__desc">' + escapeHtml(desc) + '</span>' +
+                '<span class="proun-item__foot">' +
+                  (repo.forks_count > 0 ? '<span>⑂ ' + repo.forks_count + '</span>' : '') +
+                  '<span class="proun-item__arrow">→</span>' +
+                '</span>' +
               '</span>' +
             '</span>' +
-          '</span>' +
-          '<span class="crop-mark crop-mark--tl"></span>' +
-          '<span class="crop-mark crop-mark--br"></span>';
+            '<span class="crop-mark crop-mark--tl"></span>' +
+            '<span class="crop-mark crop-mark--br"></span>';
 
-        // Pause rotation only on direct card hover
-        item.addEventListener('mouseenter', function() { isPaused = true; });
-        item.addEventListener('mouseleave', function() { isPaused = false; });
+          item.addEventListener('mouseenter', function() { isPaused = true; });
+          item.addEventListener('mouseleave', function() { isPaused = false; });
 
-        cylinder.appendChild(item);
-      });
+          cylinder.appendChild(item);
+        }
+      }
 
       // ——— Red Stars ———
       for (var s = 0; s < 16; s++) {
@@ -133,14 +149,14 @@
         star.className = 'proun-star';
         star.textContent = '★';
         star.style.left = (1 + Math.random() * 98) + '%';
-        star.style.top = (3 + Math.random() * 94) + '%';
+        star.style.top = (2 + Math.random() * 96) + '%';
         star.style.fontSize = (5 + Math.random() * 18) + 'px';
         star.style.animationDelay = (Math.random() * 7).toFixed(2) + 's';
         star.style.animationDuration = (3 + Math.random() * 4).toFixed(1) + 's';
         scene.appendChild(star);
       }
 
-      // ——— 3D Auto-Rotation ———
+      // ——— Auto-Rotation ———
       var rotation = 0;
       var isPaused = false;
       var isDragging = false;
@@ -155,10 +171,9 @@
         cylinder.style.setProperty('--rot', rotation.toFixed(2) + 'deg');
         requestAnimationFrame(tick);
       }
-
       requestAnimationFrame(tick);
 
-      // Drag background to spin (doesn't fire on cards due to closest('a') guard)
+      // Drag on background (not on cards)
       scene.addEventListener('mousedown', function(e) {
         if (e.target.closest('a')) return;
         isDragging = true;
@@ -166,39 +181,27 @@
         dragStartX = e.clientX;
         dragStartRot = rotation;
       });
-
       window.addEventListener('mousemove', function(e) {
         if (!isDragging) return;
         var dx = e.clientX - dragStartX;
         rotation = ((dragStartRot + dx * 0.5) % 360 + 360) % 360;
       });
-
       window.addEventListener('mouseup', function() {
-        if (isDragging) {
-          isDragging = false;
-          isPaused = false;
-        }
+        if (isDragging) { isDragging = false; isPaused = false; }
       });
-
       scene.addEventListener('touchstart', function(e) {
         if (e.target.closest('a')) return;
-        isDragging = true;
-        isPaused = true;
+        isDragging = true; isPaused = true;
         dragStartX = e.touches[0].clientX;
         dragStartRot = rotation;
       }, { passive: true });
-
       scene.addEventListener('touchmove', function(e) {
         if (!isDragging) return;
         var dx = e.touches[0].clientX - dragStartX;
         rotation = ((dragStartRot + dx * 0.5) % 360 + 360) % 360;
       }, { passive: true });
-
       scene.addEventListener('touchend', function() {
-        if (isDragging) {
-          isDragging = false;
-          isPaused = false;
-        }
+        if (isDragging) { isDragging = false; isPaused = false; }
       });
 
     } catch (err) {
@@ -255,19 +258,19 @@
     position: absolute;
     inset: 0;
     pointer-events: none;
-    opacity: 0.18;
+    opacity: 0.15;
     background-image:
       repeating-linear-gradient(
         28deg,
         transparent 0px,
         transparent 39px,
-        rgba(196, 164, 74, 0.07) 40px
+        rgba(196, 164, 74, 0.06) 40px
       ),
       repeating-linear-gradient(
         -28deg,
         transparent 0px,
         transparent 39px,
-        rgba(196, 164, 74, 0.07) 40px
+        rgba(196, 164, 74, 0.06) 40px
       );
   }
 
@@ -275,8 +278,8 @@
   .proun-scene {
     position: absolute;
     inset: 0;
-    perspective: 1900px;
-    perspective-origin: 50% 46%;
+    perspective: 1500px;
+    perspective-origin: 50% 48%;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -285,7 +288,7 @@
   .proun-scene:active { cursor: grabbing; }
 
   .proun-cylinder {
-    --R: 740px;
+    --R: 500px;
     width: 0;
     height: 0;
     transform-style: preserve-3d;
@@ -296,95 +299,91 @@
   .proun-item {
     position: absolute;
     display: block;
-    width: 150px;
-    min-height: 112px;
-    margin-left: -75px;
-    margin-top: -56px;
+    width: 135px;
+    height: 92px;
+    margin-left: -68px;
+    margin-top: calc(-46px + var(--y, 0px));
     backface-visibility: hidden;
     transform: rotateY(var(--a, 0deg)) translateZ(var(--R));
     text-decoration: none;
     color: inherit;
-    cursor: pointer;
     border: 2px solid var(--black);
     background: var(--white-warm);
     box-shadow: -2px 2px 0 rgba(17, 17, 17, 0.06);
-    transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1),
-                box-shadow 0.3s ease,
-                border-color 0.25s ease;
-  }
-
-  .proun-item {
-    margin-top: calc(-56px + var(--y, 0px));
+    cursor: pointer;
+    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+                box-shadow 0.25s ease,
+                border-color 0.2s ease;
   }
 
   /* ——— Hover ——— */
   .proun-item:hover {
-    transform: rotateY(var(--a, 0deg)) translateZ(var(--R)) scale(1.22);
-    box-shadow: -8px 8px 0 var(--col, var(--gold));
+    transform: rotateY(var(--a, 0deg)) translateZ(var(--R)) scale(1.2);
+    box-shadow: -6px 6px 0 var(--col, var(--gold));
     border-color: var(--col, var(--gold));
     z-index: 999;
   }
 
-  .proun-item:hover .proun-item__stripe { width: 6px; }
+  .proun-item:hover .proun-item__stripe { width: 5px; }
   .proun-item:hover .proun-item__hover { opacity: 1; }
-  .proun-item:hover .proun-item__arrow { transform: translateX(4px); opacity: 1; }
 
   /* ——— Card internals ——— */
   .proun-item__stripe {
     position: absolute;
     top: 0;
     left: 0;
-    width: 4px;
+    width: 3px;
     height: 100%;
-    transition: width 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    transition: width 0.25s cubic-bezier(0.16, 1, 0.3, 1);
   }
 
   .proun-item__inner {
     display: flex;
     flex-direction: column;
     height: 100%;
-    padding: 12px 10px 7px 14px;
+    padding: 10px 8px 5px 12px;
     position: relative;
+    overflow: hidden;
   }
 
   .proun-item__top {
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
-    gap: 6px;
+    gap: 5px;
   }
 
   .proun-item__name {
     font-family: var(--font-display);
-    font-size: 0.8rem;
+    font-size: 0.72rem;
     letter-spacing: 0.04em;
     text-transform: uppercase;
     color: var(--black);
     word-break: break-word;
-    line-height: 1.2;
+    line-height: 1.15;
   }
 
   .proun-item__stars {
     font-family: var(--font-body);
-    font-size: 0.68rem;
+    font-size: 0.62rem;
     font-weight: 600;
     color: var(--gold-dark);
     white-space: nowrap;
     flex-shrink: 0;
-    margin-top: 2px;
+    margin-top: 1px;
   }
 
   .proun-item__lang {
     display: inline-flex;
     align-items: center;
-    gap: 4px;
+    gap: 3px;
     font-family: var(--font-body);
-    font-size: 0.62rem;
+    font-size: 0.55rem;
     font-weight: 500;
     color: var(--black);
-    opacity: 0.4;
+    opacity: 0.35;
     margin-top: auto;
-    padding-top: 4px;
+    padding-top: 2px;
   }
 
   .proun-item__dot {
@@ -395,31 +394,31 @@
     flex-shrink: 0;
   }
 
-  /* ——— Hover detail overlay ——— */
+  /* ——— Hover description (compact, stays inside card) ——— */
   .proun-item__hover {
     position: absolute;
     bottom: 0;
     left: 0;
     right: 0;
-    padding: 16px 10px 7px 14px;
+    padding: 18px 8px 5px 12px;
     background: linear-gradient(to top,
       var(--white-warm) 0%,
-      var(--white-warm) 50%,
+      var(--white-warm) 40%,
       transparent 100%);
     opacity: 0;
-    transition: opacity 0.3s ease;
+    transition: opacity 0.25s ease;
     pointer-events: none;
   }
 
   .proun-item__desc {
     font-family: var(--font-body);
-    font-size: 0.66rem;
+    font-size: 0.58rem;
     color: var(--black);
     opacity: 0.8;
-    margin: 0 0 3px;
-    line-height: 1.4;
+    margin: 0 0 2px;
+    line-height: 1.3;
     display: -webkit-box;
-    -webkit-line-clamp: 2;
+    -webkit-line-clamp: 1;
     -webkit-box-orient: vertical;
     overflow: hidden;
   }
@@ -427,19 +426,19 @@
   .proun-item__foot {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 6px;
     font-family: var(--font-body);
-    font-size: 0.56rem;
+    font-size: 0.52rem;
     color: var(--black);
-    opacity: 0.5;
+    opacity: 0.45;
   }
 
   .proun-item__arrow {
     margin-left: auto;
-    font-size: 0.75rem;
+    font-size: 0.65rem;
     color: var(--red);
-    opacity: 0.6;
-    transition: transform 0.25s ease, opacity 0.25s ease;
+    opacity: 0.5;
+    transition: opacity 0.2s ease;
   }
 
   /* ============================================
@@ -453,14 +452,14 @@
     line-height: 1;
     animation: proun-star-drift 4.5s ease-in-out infinite;
     will-change: transform, opacity;
-    text-shadow: 0 0 12px rgba(204, 0, 0, 0.3), 0 0 2px rgba(204, 0, 0, 0.12);
+    text-shadow: 0 0 12px rgba(204, 0, 0, 0.25), 0 0 2px rgba(204, 0, 0, 0.1);
     z-index: 3;
   }
 
   @keyframes proun-star-drift {
-    0%, 100% { opacity: 0.05; transform: translateY(0) scale(1); }
-    35% { opacity: 0.20; transform: translateY(-7px) scale(1.12); }
-    65% { opacity: 0.12; transform: translateY(-3px) scale(1.04); }
+    0%, 100% { opacity: 0.04; transform: translateY(0) scale(1); }
+    35% { opacity: 0.18; transform: translateY(-6px) scale(1.1); }
+    65% { opacity: 0.10; transform: translateY(-3px) scale(1.03); }
   }
 
   /* ============================================
@@ -495,32 +494,32 @@
      Responsive
      ============================================ */
   @media (max-width: 860px) {
-    .proun-stage { height: 400px; }
-    .proun-scene { perspective: 1300px; }
-    .proun-cylinder { --R: 520px; }
-    .proun-item { width: 120px; min-height: 92px; margin-left: -60px; margin-top: calc(-46px + var(--y, 0px)); }
-    .proun-item__inner { padding: 9px 8px 5px 12px; }
-    .proun-item__name { font-size: 0.68rem; }
-    .proun-item__stars { font-size: 0.58rem; }
+    .proun-stage { height: 380px; }
+    .proun-scene { perspective: 1000px; }
+    .proun-cylinder { --R: 350px; }
+    .proun-item { width: 105px; height: 72px; margin-left: -53px; margin-top: calc(-36px + var(--y, 0px)); }
+    .proun-item__inner { padding: 7px 6px 4px 10px; }
+    .proun-item__name { font-size: 0.6rem; }
+    .proun-item__stars { font-size: 0.52rem; }
     .proun-item__lang { display: none; }
     .proun-item__hover { display: none; }
     .proun-star { display: none; }
-    .proun-grid-bg { opacity: 0.10; }
+    .proun-grid-bg { opacity: 0.08; }
   }
 
   @media (max-width: 540px) {
-    .proun-stage { height: 280px; }
-    .proun-scene { perspective: 850px; perspective-origin: 50% 44%; }
-    .proun-cylinder { --R: 320px; }
-    .proun-item { width: 88px; min-height: 68px; margin-left: -44px; margin-top: calc(-34px + var(--y, 0px)); border-width: 1.5px; }
-    .proun-item__inner { padding: 6px 6px 3px 8px; }
-    .proun-item__name { font-size: 0.5rem; }
-    .proun-item__stars { font-size: 0.45rem; }
+    .proun-stage { height: 260px; }
+    .proun-scene { perspective: 700px; perspective-origin: 50% 44%; }
+    .proun-cylinder { --R: 240px; }
+    .proun-item { width: 78px; height: 56px; margin-left: -39px; margin-top: calc(-28px + var(--y, 0px)); border-width: 1.5px; }
+    .proun-item__inner { padding: 5px 5px 3px 7px; }
+    .proun-item__name { font-size: 0.45rem; }
+    .proun-item__stars { font-size: 0.4rem; }
     .proun-item__lang { display: none; }
-    .proun-item__stripe { width: 3px; }
-    .proun-item:hover { transform: rotateY(var(--a)) translateZ(var(--R)) scale(1.15); box-shadow: -4px 4px 0 var(--col, var(--gold)); }
-    .proun-item .crop-mark { width: 10px; height: 10px; border-width: 2px; }
-    .proun-item .crop-mark--tl { border-width: 2px 0 0 2px; }
-    .proun-item .crop-mark--br { border-width: 0 2px 2px 0; }
+    .proun-item__stripe { width: 2px; }
+    .proun-item:hover { transform: rotateY(var(--a)) translateZ(var(--R)) scale(1.12); box-shadow: -3px 3px 0 var(--col, var(--gold)); }
+    .proun-item .crop-mark { width: 8px; height: 8px; border-width: 1.5px; }
+    .proun-item .crop-mark--tl { border-width: 1.5px 0 0 1.5px; }
+    .proun-item .crop-mark--br { border-width: 0 1.5px 1.5px 0; }
   }
 </style>
