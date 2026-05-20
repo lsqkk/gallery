@@ -63,48 +63,40 @@
 
       loading.style.display = 'none';
 
-      var count = filtered.length;
-      var POSITIONS = 8;               // number of angular columns
-      var angleStep = 360 / POSITIONS;
+      var count = Math.min(filtered.length, 20);
 
-      // Determine how many cards per column (some 3, some 2)
-      var perColumn = [];
-      var threeLeft = 4;  // 4 columns get 3 cards
-      for (var p = 0; p < POSITIONS; p++) {
-        if (threeLeft > 0 && (threeLeft >= POSITIONS - p || Math.random() < 0.5)) {
-          perColumn.push(3);
-          threeLeft--;
-        } else {
-          perColumn.push(2);
-        }
-      }
+      // ——— FIXED LAYOUT ———
+      // 12 columns, 30° each. 8 columns with 2 cards, 4 columns with 1 card.
+      // Card height 72px → Y spacing 78px guarantees no overlap.
+      var LAYOUT = [
+        { n: 2, ys: [-39,  39] },  // col 0: pair
+        { n: 2, ys: [-39,  39] },  // col 1: pair
+        { n: 1, ys: [ -18 ] },     // col 2: single
+        { n: 2, ys: [-39,  39] },  // col 3: pair
+        { n: 2, ys: [-39,  39] },  // col 4: pair
+        { n: 1, ys: [  22 ] },     // col 5: single
+        { n: 2, ys: [-39,  39] },  // col 6: pair
+        { n: 2, ys: [-39,  39] },  // col 7: pair
+        { n: 1, ys: [ -10 ] },     // col 8: single
+        { n: 2, ys: [-39,  39] },  // col 9: pair
+        { n: 2, ys: [-39,  39] },  // col 10: pair
+        { n: 1, ys: [  30 ] },     // col 11: single
+      ];
 
-      var Y_BASES = [-52, 0, 52];  // top, center, bottom
+      var COLS = LAYOUT.length;          // 12
+      var ANGLE_STEP = 360 / COLS;       // 30°
+      var ANGLE_OFFSET = 12;
 
       var cardIdx = 0;
-      for (var p = 0; p < POSITIONS && cardIdx < count; p++) {
-        var n = Math.min(perColumn[p], count - cardIdx);
-        // Pick which levels this column uses
-        var levels;
-        if (n === 3) {
-          levels = [0, 1, 2];
-        } else {
-          var r = Math.random();
-          if (r < 0.4) levels = [0, 1];      // top + center
-          else if (r < 0.8) levels = [1, 2]; // center + bottom
-          else levels = [0, 2];               // top + bottom
-        }
-
-        for (var k = 0; k < n && cardIdx < count; k++, cardIdx++) {
+      for (var p = 0; p < COLS && cardIdx < count; p++) {
+        var col = LAYOUT[p];
+        for (var k = 0; k < col.n && cardIdx < count; k++, cardIdx++) {
           var repo = filtered[cardIdx];
-          var col = langColor(repo.language);
+          var colAngle = p * ANGLE_STEP + ANGLE_OFFSET;
+          var angle = colAngle + (Math.random() - 0.5) * 2.5;
+          var yPos = col.ys[k] + (Math.random() - 0.5) * 6;
 
-          // Angle: column center ± small jitter so same-column cards fan slightly
-          var angleJitter = (Math.random() - 0.5) * 3;
-          var angle = p * angleStep + angleStep * 0.3 + angleJitter;
-
-          var yPos = Y_BASES[levels[k]] + (Math.random() - 0.5) * 14;
-
+          var colAccent = langColor(repo.language);
           var item = document.createElement('a');
           item.href = repo.html_url;
           item.target = '_blank';
@@ -112,19 +104,19 @@
           item.className = 'proun-item';
           item.style.setProperty('--a', angle.toFixed(1) + 'deg');
           item.style.setProperty('--y', yPos.toFixed(0) + 'px');
-          item.style.setProperty('--col', col);
+          item.style.setProperty('--col', colAccent);
 
           var shortName = repo.name.length > 14 ? repo.name.slice(0, 12) + '…' : repo.name;
           var desc = repo.description || '—';
 
           item.innerHTML =
-            '<span class="proun-item__stripe" style="background:' + col + '"></span>' +
+            '<span class="proun-item__stripe" style="background:' + colAccent + '"></span>' +
             '<span class="proun-item__inner">' +
               '<span class="proun-item__top">' +
                 '<span class="proun-item__name">' + escapeHtml(shortName) + '</span>' +
                 '<span class="proun-item__stars">★ ' + repo.stargazers_count + '</span>' +
               '</span>' +
-              (repo.language ? '<span class="proun-item__lang"><span class="proun-item__dot" style="background:' + col + '"></span>' + repo.language + '</span>' : '') +
+              (repo.language ? '<span class="proun-item__lang"><span class="proun-item__dot" style="background:' + colAccent + '"></span>' + repo.language + '</span>' : '') +
               '<span class="proun-item__hover">' +
                 '<span class="proun-item__desc">' + escapeHtml(desc) + '</span>' +
                 '<span class="proun-item__foot">' +
@@ -138,7 +130,6 @@
 
           item.addEventListener('mouseenter', function() { isPaused = true; });
           item.addEventListener('mouseleave', function() { isPaused = false; });
-
           cylinder.appendChild(item);
         }
       }
@@ -160,49 +151,36 @@
       var rotation = 0;
       var isPaused = false;
       var isDragging = false;
-      var dragStartX = 0;
-      var dragStartRot = 0;
+      var dragStartX = 0, dragStartRot = 0;
       var SPEED = 0.10;
 
       function tick() {
-        if (!isPaused && !isDragging) {
-          rotation = (rotation + SPEED) % 360;
-        }
+        if (!isPaused && !isDragging) rotation = (rotation + SPEED) % 360;
         cylinder.style.setProperty('--rot', rotation.toFixed(2) + 'deg');
         requestAnimationFrame(tick);
       }
       requestAnimationFrame(tick);
 
-      // Drag on background (not on cards)
       scene.addEventListener('mousedown', function(e) {
         if (e.target.closest('a')) return;
-        isDragging = true;
-        isPaused = true;
-        dragStartX = e.clientX;
-        dragStartRot = rotation;
+        isDragging = true; isPaused = true;
+        dragStartX = e.clientX; dragStartRot = rotation;
       });
       window.addEventListener('mousemove', function(e) {
         if (!isDragging) return;
-        var dx = e.clientX - dragStartX;
-        rotation = ((dragStartRot + dx * 0.5) % 360 + 360) % 360;
+        rotation = ((dragStartRot + (e.clientX - dragStartX) * 0.5) % 360 + 360) % 360;
       });
-      window.addEventListener('mouseup', function() {
-        if (isDragging) { isDragging = false; isPaused = false; }
-      });
+      window.addEventListener('mouseup', function() { if (isDragging) { isDragging = false; isPaused = false; } });
       scene.addEventListener('touchstart', function(e) {
         if (e.target.closest('a')) return;
         isDragging = true; isPaused = true;
-        dragStartX = e.touches[0].clientX;
-        dragStartRot = rotation;
+        dragStartX = e.touches[0].clientX; dragStartRot = rotation;
       }, { passive: true });
       scene.addEventListener('touchmove', function(e) {
         if (!isDragging) return;
-        var dx = e.touches[0].clientX - dragStartX;
-        rotation = ((dragStartRot + dx * 0.5) % 360 + 360) % 360;
+        rotation = ((dragStartRot + (e.touches[0].clientX - dragStartX) * 0.5) % 360 + 360) % 360;
       }, { passive: true });
-      scene.addEventListener('touchend', function() {
-        if (isDragging) { isDragging = false; isPaused = false; }
-      });
+      scene.addEventListener('touchend', function() { if (isDragging) { isDragging = false; isPaused = false; } });
 
     } catch (err) {
       loading.textContent = '— Failed to load repositories —';
@@ -242,9 +220,10 @@
     margin-top: -1.8rem;
   }
 
-  /* ============================================
+  /* =============================================
      Proun Stage — 3D Cylinder Gallery
-     ============================================ */
+     Fixed layout: 12 cols × 30°, R=720px
+     ============================================= */
   .proun-stage {
     position: relative;
     max-width: 1260px;
@@ -258,27 +237,16 @@
     position: absolute;
     inset: 0;
     pointer-events: none;
-    opacity: 0.15;
+    opacity: 0.12;
     background-image:
-      repeating-linear-gradient(
-        28deg,
-        transparent 0px,
-        transparent 39px,
-        rgba(196, 164, 74, 0.06) 40px
-      ),
-      repeating-linear-gradient(
-        -28deg,
-        transparent 0px,
-        transparent 39px,
-        rgba(196, 164, 74, 0.06) 40px
-      );
+      repeating-linear-gradient(28deg, transparent 0px, transparent 39px, rgba(196,164,74,0.05) 40px),
+      repeating-linear-gradient(-28deg, transparent 0px, transparent 39px, rgba(196,164,74,0.05) 40px);
   }
 
-  /* ——— 3D Scene ——— */
   .proun-scene {
     position: absolute;
     inset: 0;
-    perspective: 1500px;
+    perspective: 1800px;
     perspective-origin: 50% 48%;
     display: flex;
     align-items: center;
@@ -288,7 +256,7 @@
   .proun-scene:active { cursor: grabbing; }
 
   .proun-cylinder {
-    --R: 500px;
+    --R: 720px;
     width: 0;
     height: 0;
     transform-style: preserve-3d;
@@ -299,49 +267,43 @@
   .proun-item {
     position: absolute;
     display: block;
-    width: 135px;
-    height: 92px;
-    margin-left: -68px;
-    margin-top: calc(-46px + var(--y, 0px));
+    width: 138px;
+    height: 72px;
+    margin-left: -69px;
+    margin-top: calc(-36px + var(--y, 0px));
     backface-visibility: hidden;
     transform: rotateY(var(--a, 0deg)) translateZ(var(--R));
     text-decoration: none;
     color: inherit;
     border: 2px solid var(--black);
     background: var(--white-warm);
-    box-shadow: -2px 2px 0 rgba(17, 17, 17, 0.06);
+    box-shadow: -2px 2px 0 rgba(17,17,17,0.06);
     cursor: pointer;
-    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+    transition: transform 0.3s cubic-bezier(0.16,1,0.3,1),
                 box-shadow 0.25s ease,
                 border-color 0.2s ease;
   }
 
-  /* ——— Hover ——— */
   .proun-item:hover {
-    transform: rotateY(var(--a, 0deg)) translateZ(var(--R)) scale(1.2);
+    transform: rotateY(var(--a,0deg)) translateZ(var(--R)) scale(1.18);
     box-shadow: -6px 6px 0 var(--col, var(--gold));
     border-color: var(--col, var(--gold));
     z-index: 999;
   }
-
   .proun-item:hover .proun-item__stripe { width: 5px; }
   .proun-item:hover .proun-item__hover { opacity: 1; }
 
   /* ——— Card internals ——— */
   .proun-item__stripe {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 3px;
-    height: 100%;
-    transition: width 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    position: absolute; top: 0; left: 0;
+    width: 3px; height: 100%;
+    transition: width 0.25s cubic-bezier(0.16,1,0.3,1);
   }
 
   .proun-item__inner {
-    display: flex;
-    flex-direction: column;
+    display: flex; flex-direction: column;
     height: 100%;
-    padding: 10px 8px 5px 12px;
+    padding: 9px 7px 4px 11px;
     position: relative;
     overflow: hidden;
   }
@@ -350,22 +312,22 @@
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
-    gap: 5px;
+    gap: 4px;
   }
 
   .proun-item__name {
     font-family: var(--font-display);
-    font-size: 0.72rem;
+    font-size: 0.7rem;
     letter-spacing: 0.04em;
     text-transform: uppercase;
     color: var(--black);
     word-break: break-word;
-    line-height: 1.15;
+    line-height: 1.1;
   }
 
   .proun-item__stars {
     font-family: var(--font-body);
-    font-size: 0.62rem;
+    font-size: 0.6rem;
     font-weight: 600;
     color: var(--gold-dark);
     white-space: nowrap;
@@ -374,150 +336,112 @@
   }
 
   .proun-item__lang {
-    display: inline-flex;
-    align-items: center;
-    gap: 3px;
+    display: inline-flex; align-items: center; gap: 3px;
     font-family: var(--font-body);
-    font-size: 0.55rem;
-    font-weight: 500;
-    color: var(--black);
-    opacity: 0.35;
-    margin-top: auto;
-    padding-top: 2px;
+    font-size: 0.52rem; font-weight: 500;
+    color: var(--black); opacity: 0.35;
+    margin-top: auto; padding-top: 1px;
   }
 
   .proun-item__dot {
     display: inline-block;
-    width: 5px;
-    height: 5px;
-    border-radius: 50%;
-    flex-shrink: 0;
+    width: 4px; height: 4px;
+    border-radius: 50%; flex-shrink: 0;
   }
 
-  /* ——— Hover description (compact, stays inside card) ——— */
+  /* ——— Hover description (compact, never overflows) ——— */
   .proun-item__hover {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    padding: 18px 8px 5px 12px;
+    position: absolute; bottom: 0; left: 0; right: 0;
+    padding: 14px 7px 4px 11px;
     background: linear-gradient(to top,
-      var(--white-warm) 0%,
-      var(--white-warm) 40%,
-      transparent 100%);
+      var(--white-warm) 0%, var(--white-warm) 35%, transparent 100%);
     opacity: 0;
-    transition: opacity 0.25s ease;
+    transition: opacity 0.2s ease;
     pointer-events: none;
   }
 
   .proun-item__desc {
     font-family: var(--font-body);
-    font-size: 0.58rem;
-    color: var(--black);
-    opacity: 0.8;
-    margin: 0 0 2px;
-    line-height: 1.3;
-    display: -webkit-box;
-    -webkit-line-clamp: 1;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
+    font-size: 0.55rem; color: var(--black); opacity: 0.8;
+    margin: 0 0 1px; line-height: 1.3;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   }
 
   .proun-item__foot {
-    display: flex;
-    align-items: center;
-    gap: 6px;
+    display: flex; align-items: center; gap: 6px;
     font-family: var(--font-body);
-    font-size: 0.52rem;
-    color: var(--black);
-    opacity: 0.45;
+    font-size: 0.48rem; color: var(--black); opacity: 0.45;
   }
 
   .proun-item__arrow {
     margin-left: auto;
-    font-size: 0.65rem;
-    color: var(--red);
-    opacity: 0.5;
+    font-size: 0.6rem; color: var(--red); opacity: 0.5;
     transition: opacity 0.2s ease;
   }
 
-  /* ============================================
+  /* =============================================
      Red Stars
-     ============================================ */
+     ============================================= */
   .proun-star {
-    position: absolute;
-    color: var(--red);
-    pointer-events: none;
-    user-select: none;
-    line-height: 1;
+    position: absolute; color: var(--red);
+    pointer-events: none; user-select: none; line-height: 1;
     animation: proun-star-drift 4.5s ease-in-out infinite;
     will-change: transform, opacity;
-    text-shadow: 0 0 12px rgba(204, 0, 0, 0.25), 0 0 2px rgba(204, 0, 0, 0.1);
+    text-shadow: 0 0 12px rgba(204,0,0,0.25), 0 0 2px rgba(204,0,0,0.1);
     z-index: 3;
   }
 
   @keyframes proun-star-drift {
     0%, 100% { opacity: 0.04; transform: translateY(0) scale(1); }
-    35% { opacity: 0.18; transform: translateY(-6px) scale(1.1); }
-    65% { opacity: 0.10; transform: translateY(-3px) scale(1.03); }
+    35% { opacity: 0.16; transform: translateY(-5px) scale(1.08); }
+    65% { opacity: 0.09; transform: translateY(-2px) scale(1.02); }
   }
 
-  /* ============================================
+  /* =============================================
      Loading
-     ============================================ */
+     ============================================= */
   .opensource__loading {
-    position: absolute;
-    left: 50%;
-    top: 50%;
-    transform: translate(-50%, -50%);
-    display: flex;
-    gap: 8px;
-    font-family: var(--font-body);
-    font-size: 1rem;
-    letter-spacing: 0.3em;
-    color: var(--black);
-    opacity: 0.25;
+    position: absolute; left: 50%; top: 50%;
+    transform: translate(-50%,-50%);
+    display: flex; gap: 8px;
+    font-family: var(--font-body); font-size: 1rem;
+    letter-spacing: 0.3em; color: var(--black); opacity: 0.25;
   }
-
-  .opensource__loading-dot {
-    animation: dot-pulse 1.4s ease-in-out infinite;
-  }
+  .opensource__loading-dot { animation: dot-pulse 1.4s ease-in-out infinite; }
   .opensource__loading-dot:nth-child(2) { animation-delay: 0.2s; }
   .opensource__loading-dot:nth-child(3) { animation-delay: 0.4s; }
-
   @keyframes dot-pulse {
-    0%, 80%, 100% { opacity: 0.2; transform: scale(0.8); }
+    0%,80%,100% { opacity: 0.2; transform: scale(0.8); }
     40% { opacity: 0.8; transform: scale(1.1); }
   }
 
-  /* ============================================
+  /* =============================================
      Responsive
-     ============================================ */
+     ============================================= */
   @media (max-width: 860px) {
     .proun-stage { height: 380px; }
-    .proun-scene { perspective: 1000px; }
-    .proun-cylinder { --R: 350px; }
-    .proun-item { width: 105px; height: 72px; margin-left: -53px; margin-top: calc(-36px + var(--y, 0px)); }
-    .proun-item__inner { padding: 7px 6px 4px 10px; }
-    .proun-item__name { font-size: 0.6rem; }
-    .proun-item__stars { font-size: 0.52rem; }
+    .proun-scene { perspective: 1200px; }
+    .proun-cylinder { --R: 480px; }
+    .proun-item { width: 105px; height: 56px; margin-left: -53px; margin-top: calc(-28px + var(--y,0px)); }
+    .proun-item__inner { padding: 6px 5px 3px 9px; }
+    .proun-item__name { font-size: 0.58rem; }
+    .proun-item__stars { font-size: 0.5rem; }
     .proun-item__lang { display: none; }
     .proun-item__hover { display: none; }
     .proun-star { display: none; }
-    .proun-grid-bg { opacity: 0.08; }
   }
 
   @media (max-width: 540px) {
     .proun-stage { height: 260px; }
-    .proun-scene { perspective: 700px; perspective-origin: 50% 44%; }
-    .proun-cylinder { --R: 240px; }
-    .proun-item { width: 78px; height: 56px; margin-left: -39px; margin-top: calc(-28px + var(--y, 0px)); border-width: 1.5px; }
-    .proun-item__inner { padding: 5px 5px 3px 7px; }
-    .proun-item__name { font-size: 0.45rem; }
-    .proun-item__stars { font-size: 0.4rem; }
+    .proun-scene { perspective: 800px; perspective-origin: 50% 44%; }
+    .proun-cylinder { --R: 280px; }
+    .proun-item { width: 75px; height: 42px; margin-left: -38px; margin-top: calc(-21px + var(--y,0px)); border-width: 1.5px; }
+    .proun-item__inner { padding: 4px 4px 2px 6px; }
+    .proun-item__name { font-size: 0.42rem; }
+    .proun-item__stars { font-size: 0.38rem; }
     .proun-item__lang { display: none; }
     .proun-item__stripe { width: 2px; }
-    .proun-item:hover { transform: rotateY(var(--a)) translateZ(var(--R)) scale(1.12); box-shadow: -3px 3px 0 var(--col, var(--gold)); }
+    .proun-item:hover { transform: rotateY(var(--a)) translateZ(var(--R)) scale(1.1); box-shadow: -3px 3px 0 var(--col, var(--gold)); }
     .proun-item .crop-mark { width: 8px; height: 8px; border-width: 1.5px; }
     .proun-item .crop-mark--tl { border-width: 1.5px 0 0 1.5px; }
     .proun-item .crop-mark--br { border-width: 0 1.5px 1.5px 0; }
