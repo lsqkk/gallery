@@ -18,7 +18,10 @@
       "Bash(break)",
       "Bash(exit 0)",
       "Bash(npx playwright *)",
-      "Bash(node -e ' *)"
+      "Bash(node -e ' *)",
+      "Bash(git config *)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" --connect-timeout 5 https://api.github.com/users/lsqkk/repos)",
+      "Bash(git push *)"
     ]
   }
 }
