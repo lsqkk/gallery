@@ -23,7 +23,9 @@
       "Bash(curl -s -o /dev/null -w \"%{http_code}\" --connect-timeout 5 https://api.github.com/users/lsqkk/repos)",
       "Bash(git push *)",
       "Bash(powershell.exe -Command \"[System.Net.WebRequest]::GetSystemWebProxy\\(\\) | Select-Object Address\")",
-      "Bash(powershell.exe *)"
+      "Bash(powershell.exe *)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" --connect-timeout 3 http://127.0.0.1:7890)",
+      "Bash(curl *)"
     ]
   }
 }
