@@ -128,6 +128,17 @@
           item.style.setProperty('--y', yPos.toFixed(0) + 'px');
           item.style.setProperty('--col', colAccent);
 
+          // Sphere section tilt: top/bottom cards tilt inward
+          var tiltDeg = -Math.atan2(yPos, R * 0.65) * (180 / Math.PI) * 0.7;
+          tiltDeg = Math.max(-25, Math.min(25, tiltDeg));
+          item.style.setProperty('--tilt-x', tiltDeg.toFixed(1) + 'deg');
+
+          // Compensate for vertical shift caused by rotateX after translateZ
+          // rotateX(tilt) shifts center by -R*sin(tilt) in Y; offset yPos to cancel
+          var tiltRad = tiltDeg * Math.PI / 180;
+          var yComp = Math.round(R * Math.sin(tiltRad));
+          item.style.setProperty('--y', (yPos + yComp).toFixed(0) + 'px');
+
           var shortName = repo.name.length > 16 ? repo.name.slice(0, 14) + '…' : repo.name;
           var desc = repo.description || '—';
 
@@ -267,7 +278,7 @@
     margin-left: -70px;
     margin-top: calc(-45px + var(--y, 0px));
     backface-visibility: hidden;
-    transform: rotateY(var(--a, 0deg)) translateZ(var(--R));
+    transform: rotateY(var(--a, 0deg)) rotateX(var(--tilt-x, 0deg)) translateZ(var(--R));
     text-decoration: none; color: inherit;
     border: 2px solid var(--black);
     background: var(--white-warm);
@@ -279,7 +290,7 @@
   }
 
   .proun-item:hover {
-    transform: rotateY(var(--a,0deg)) translateZ(var(--R)) scale(1.15);
+    transform: rotateY(var(--a,0deg)) rotateX(var(--tilt-x,0deg)) translateZ(var(--R)) scale(1.15);
     box-shadow: -8px 8px 0 var(--col, var(--gold));
     border-color: var(--col, var(--gold));
     z-index: 999;
@@ -423,7 +434,7 @@
     .proun-item__lang { display: none; }
     .proun-item__desc { font-size: 0.34rem; -webkit-line-clamp: 1; margin-top: 1px; }
     .proun-item__stripe { width: 2px; }
-    .proun-item:hover { transform: rotateY(var(--a)) translateZ(var(--R)) scale(1.08); box-shadow: -3px 3px 0 var(--col, var(--gold)); }
+    .proun-item:hover { transform: rotateY(var(--a)) rotateX(var(--tilt-x)) translateZ(var(--R)) scale(1.08); box-shadow: -3px 3px 0 var(--col, var(--gold)); }
     .proun-item .crop-mark { width: 7px; height: 7px; border-width: 1.5px; }
     .proun-item .crop-mark--tl { border-width: 1.5px 0 0 1.5px; }
     .proun-item .crop-mark--br { border-width: 0 1.5px 1.5px 0; }
