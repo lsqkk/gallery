@@ -67,7 +67,6 @@
   var secHand = document.getElementById('clock-second');
   var clockDigital = document.getElementById('clock-digital');
   var ringEl = document.getElementById('geo-ring');
-  var ringHT = document.getElementById('ring-ht');
 
   if (hourHand) {
     function tick() {
@@ -90,13 +89,42 @@
     setInterval(tick, 1000);
   }
 
-  // Clock hover: invisible hit target controls visible ring
-  if (ringHT && ringEl) {
-    ringHT.addEventListener('mouseenter', function() { ringEl.classList.add('ring-active'); });
-    ringHT.addEventListener('mouseleave', function() { ringEl.classList.remove('ring-active'); });
+  // Clock hover: track mouse position relative to clock ring
+  // ring-ht is pointer-events:none so it doesn't block interactive elements above
+  if (ringEl) {
+    var ringActive = false;
+
+    function updateRingHover(e) {
+      var rect = ringEl.getBoundingClientRect();
+      var cx = rect.left + rect.width / 2;
+      var cy = rect.top + rect.height / 2;
+      var dx = e.clientX - cx;
+      var dy = e.clientY - cy;
+      var inside = (dx * dx + dy * dy) < (rect.width / 2) * (rect.width / 2);
+
+      if (inside !== ringActive) {
+        ringActive = inside;
+        if (inside) {
+          ringEl.classList.add('ring-active');
+        } else {
+          ringEl.classList.remove('ring-active');
+        }
+      }
+    }
+
+    document.addEventListener('mousemove', updateRingHover, { passive: true });
+
     // Touch support
-    ringHT.addEventListener('touchstart', function() { ringEl.classList.add('ring-active'); }, { passive: true });
-    ringHT.addEventListener('touchend', function() { ringEl.classList.remove('ring-active'); });
+    document.addEventListener('touchstart', function(e) {
+      var t = e.touches[0];
+      if (t) updateRingHover({ clientX: t.clientX, clientY: t.clientY });
+    }, { passive: true });
+    document.addEventListener('touchend', function() {
+      if (ringActive) {
+        ringActive = false;
+        ringEl.classList.remove('ring-active');
+      }
+    });
   }
 
   /* ========== DRAGGABLE GOLD BAR ========== */
@@ -316,7 +344,7 @@
     bottom: -4%;
     left: -3%;
     border-radius: 50%;
-    pointer-events: auto;
+    pointer-events: none;
     cursor: default;
   }
 
