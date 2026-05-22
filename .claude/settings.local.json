@@ -21,7 +21,9 @@
       "Bash(node -e ' *)",
       "Bash(git config *)",
       "Bash(curl -s -o /dev/null -w \"%{http_code}\" --connect-timeout 5 https://api.github.com/users/lsqkk/repos)",
-      "Bash(git push *)"
+      "Bash(git push *)",
+      "Bash(powershell.exe -Command \"[System.Net.WebRequest]::GetSystemWebProxy\\(\\) | Select-Object Address\")",
+      "Bash(powershell.exe *)"
     ]
   }
 }
