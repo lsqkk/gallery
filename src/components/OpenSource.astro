@@ -230,6 +230,8 @@
     position: relative; max-width: 1260px;
     margin: 0 auto; padding: 0 4vw;
     height: 560px; overflow: visible;
+    transform: translateZ(0);
+    will-change: transform;
   }
 
   .proun-grid-bg {
@@ -419,7 +421,7 @@
     .proun-item__name { font-size: 0.38rem; }
     .proun-item__stars { font-size: 0.32rem; }
     .proun-item__lang { display: none; }
-    .proun-item__desc { display: none; }
+    .proun-item__desc { font-size: 0.34rem; -webkit-line-clamp: 1; margin-top: 1px; }
     .proun-item__stripe { width: 2px; }
     .proun-item:hover { transform: rotateY(var(--a)) translateZ(var(--R)) scale(1.08); box-shadow: -3px 3px 0 var(--col, var(--gold)); }
     .proun-item .crop-mark { width: 7px; height: 7px; border-width: 1.5px; }
