@@ -129,7 +129,7 @@
           item.style.setProperty('--col', colAccent);
 
           // Sphere section tilt: top/bottom cards tilt inward
-          var tiltDeg = -Math.atan2(yPos, R * 0.65) * (180 / Math.PI) * 0.7;
+          var tiltDeg = -Math.atan2(yPos, R * 0.65) * (180 / Math.PI) * 0.6;
           tiltDeg = Math.max(-25, Math.min(25, tiltDeg));
           item.style.setProperty('--tilt-x', tiltDeg.toFixed(1) + 'deg');
 
@@ -183,6 +183,26 @@
       function tick() {
         if (!isPaused && !isDragging) rotation = (rotation + SPEED) % 360;
         cylinder.style.setProperty('--rot', rotation.toFixed(2) + 'deg');
+
+        // Angle-based ghosting: cards facing away get semi-transparent gray blur
+        var items = cylinder.querySelectorAll('.proun-item');
+        for (var i = 0; i < items.length; i++) {
+          var item = items[i];
+          var a = parseFloat(item.style.getPropertyValue('--a')) || 0;
+          var rel = ((a + rotation) % 360 + 360) % 360;
+          var facing = Math.cos(rel * Math.PI / 180);
+          // Smooth ghost transition: starts at facing=0.15 (~81°), fully ghosted at facing=-0.25 (~104°)
+          var t = Math.max(0, Math.min(1, (0.15 - facing) / 0.4));
+          if (t > 0.001) {
+            var op = (1 - t * 0.88).toFixed(2);
+            item.style.opacity = op;
+            item.style.filter = 'grayscale(' + t.toFixed(1) + ') blur(' + (t * 2).toFixed(1) + 'px)';
+          } else {
+            item.style.opacity = '';
+            item.style.filter = '';
+          }
+        }
+
         requestAnimationFrame(tick);
       }
       requestAnimationFrame(tick);
@@ -277,7 +297,6 @@
     height: 90px;
     margin-left: -70px;
     margin-top: calc(-45px + var(--y, 0px));
-    backface-visibility: hidden;
     transform: rotateY(var(--a, 0deg)) rotateX(var(--tilt-x, 0deg)) translateZ(var(--R));
     text-decoration: none; color: inherit;
     border: 2px solid var(--black);
