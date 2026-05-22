@@ -30,7 +30,27 @@
       "Read(//c/Users/hp/.config/clash/**)",
       "Read(//c/Program Files/**)",
       "Read(//c/Users/hp/scoop/**)",
-      "Bash(netsh interface *)"
+      "Bash(netsh interface *)",
+      "Bash(netstat -ano)",
+      "Bash(findstr \":7890\")",
+      "Bash(xargs grep -l \"星辰\")",
+      "Read(//c/Users/hp/**)",
+      "Bash(bash *)",
+      "Bash(grep -A1 \"^  - name: 星辰加速$\" \"D:\\\\Program Files\\\\Clash.for.Windows-0.20.16-ikuuu/data/profiles/1779465191235.yml\")",
+      "Bash(tasklist /v /fo csv)",
+      "Bash(wmic process *)",
+      "Bash(powershell -Command \"Get-Process -Id 22408 | Select-Object *\")",
+      "Bash(powershell *)",
+      "Bash(findstr \":10001\")",
+      "Bash(tasklist /fi \"PID eq 2204\" /fo csv /nh)",
+      "Bash(awk '{print $2}')",
+      "Bash(taskkill /F /PID 22408)",
+      "Bash(taskkill /F /PID 2204)",
+      "Bash(taskkill -f -pid 22408)",
+      "Bash(taskkill -f -pid 2204)",
+      "Bash(sc stop *)",
+      "Bash(sc delete *)",
+      "Bash(Start-Sleep 2)"
     ]
   }
 }
