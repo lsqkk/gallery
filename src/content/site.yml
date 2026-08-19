@@ -24,6 +24,12 @@ projects:
     featured: false
     tags: ["学术"]
 
+  - name: "知识边界"
+    description: "一个有趣的通识知识测试"
+    url: "https://kn-bo.130923.xyz"
+    featured: false
+    tags: ["通识"]
+
   - name: "GitHub 主页"
     description: "我的开源项目集合"
     url: "https://github.com/lsqkk"
